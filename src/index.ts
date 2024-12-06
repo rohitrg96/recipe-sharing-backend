@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db';
-import { userRoutes } from './routes/user.routes';
+import apiRouter from './routes/api.routes';
 
 dotenv.config();
 
@@ -21,7 +21,7 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Recipe Sharing API');
 });
 
-app.use('/api', userRoutes);
+app.use('/api', apiRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
