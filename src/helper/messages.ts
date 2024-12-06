@@ -10,4 +10,11 @@ export const msg = {
     alreadyExist: 'User already exists',
     emailExist: 'Email already registered',
   },
+  recipe: {
+    added: 'Recipe added successfully',
+    updated: 'Recipe updated successfully',
+    deleted: 'Recipe deleted successfully',
+    alreadyExist: 'Recipe already exists',
+    notFound: 'Recipe not found',
+  },
 };

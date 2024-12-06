@@ -1,12 +1,12 @@
-import { UserService } from '../services/user.service';
+import { AuthService } from '../services/auth.service';
 import { Request, Response } from 'express';
 import { responseStatus } from '../helper/response';
 
-let userService = new UserService();
+let authService = new AuthService();
 
-export const AddUser = (req: Request, res: Response) => {
+export const login = (req: Request, res: Response) => {
   try {
-    return userService.addUser(req, res);
+    return authService.login(req, res);
   } catch (error: any) {
     return responseStatus(res, 500, error.message, error);
   }
