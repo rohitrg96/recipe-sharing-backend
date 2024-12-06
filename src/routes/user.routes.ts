@@ -1,8 +1,9 @@
 import express from 'express';
 import * as usersController from '../controllers/user.controller';
+import { validateAddUser } from '../validator/user.validator';
 
-let router = express.Router();
+let userRouter = express.Router();
 
-router.post('/users', usersController.AddUser);
+userRouter.post('/', validateAddUser, usersController.AddUser);
 
-export { router as userRoutes };
+export default userRouter;
