@@ -33,12 +33,8 @@ export class RecipeService {
     console.log(recipeId);
     let recipe: IRecipe = req.body;
     let userId = req.user?.id;
-    let userExist = await UserSchema.findOne({ _id: userId });
-    if (!userExist) {
-      return responseStatus(res, 400, msg.user.notFound, null);
-    }
 
-    let recipeExist = await RecipeSchema.findOne({ _id: recipeId });
+    let recipeExist = await RecipeSchema.findOne({ _id: recipeId, user: userId });
     if (!recipeExist) {
       return responseStatus(res, 400, msg.recipe.notFound, null);
     }
