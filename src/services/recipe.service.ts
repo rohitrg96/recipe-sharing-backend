@@ -93,7 +93,6 @@ export class RecipeService {
         };
       }
       // search by title
-      console.log(title);
       if (title !== undefined && title.trim() !== '') {
         query.title = new RegExp(title, 'i');
       }
@@ -109,10 +108,10 @@ export class RecipeService {
 
       const pageNumber = parseInt(page as unknown as string, 10);
       const limitNumber = parseInt(limit as unknown as string, 10);
-      console.log(query);
 
       let recipes = await RecipeSchema.find(query)
         .populate('user', 'firstName lastName email')
+        .populate('stars.user', 'firstName lastName email')
         .skip((pageNumber - 1) * limitNumber)
         .limit(limitNumber);
 
@@ -127,7 +126,7 @@ export class RecipeService {
           totalPages: Math.ceil(totalRecipes / limitNumber),
         },
       };
-      // console.log(recipes, totalRecipes);
+
       return responseStatus(res, 200, msg.recipe.fetched, finalData);
     } catch (error) {
       console.error(error);
@@ -135,7 +134,7 @@ export class RecipeService {
     }
   };
 
-  getRecipeById = async (req: Request, res: Response) => {
+  getRecipe = async (req: Request, res: Response) => {
     try {
       let recipeId = req.params.recipeId;
 
@@ -143,12 +142,110 @@ export class RecipeService {
         return responseStatus(res, 400, msg.recipe.notFound, null);
       }
 
-      let recipeExist = await RecipeSchema.findOne({ _id: recipeId }).populate('user', 'firstName lastName email');
+      let recipeExist = await RecipeSchema.findOne({ _id: recipeId })
+        .populate('user', 'firstName lastName email')
+        .populate('stars.user', 'firstName lastName email')
+        .populate('comments.user', 'firstName lastName email');
 
       if (recipeExist) {
-        return responseStatus(res, 200, msg.recipe.updated, recipeExist);
+        return responseStatus(res, 200, msg.recipe.fetched, recipeExist);
       } else {
         return responseStatus(res, 400, 'error fetching recipe Details', null);
+      }
+    } catch (error) {
+      console.error(error);
+      return responseStatus(res, 500, 'An error occurred while fetching recipe.', null);
+    }
+  };
+
+  deleteRecipe = async (req: Request, res: Response) => {
+    try {
+      let recipeId = req.params.recipeId;
+      let userId = req.user?.id;
+
+      let deleteRecipe = await RecipeSchema.findByIdAndDelete({ _id: recipeId, user: userId }).populate(
+        'user',
+        'firstName lastName email',
+      );
+
+      if (deleteRecipe) {
+        return responseStatus(res, 200, msg.recipe.deleted, deleteRecipe);
+      } else {
+        return responseStatus(res, 400, 'error deleting recipe', null);
+      }
+    } catch (error) {
+      console.error(error);
+      return responseStatus(res, 500, 'An error occurred while deleting recipe.', null);
+    }
+  };
+
+  //logged in user can rate any recipe
+  AddRating = async (req: Request, res: Response) => {
+    try {
+      let recipeId = req.params.recipeId;
+      let userId = req.user?.id;
+      let userRating = req.body.rating;
+
+      let updatedRecipe = await RecipeSchema.findById(recipeId);
+      if (!updatedRecipe) {
+        return responseStatus(res, 400, msg.recipe.notFound, null);
+      }
+
+      //// Check if the user has already rated this recipe
+      const existingRating = updatedRecipe.stars?.find((star) => star.user.toString() === userId);
+
+      if (existingRating) {
+        // Update the existing rating
+        existingRating.rating = userRating;
+      } else {
+        // Add a new rating
+        updatedRecipe.stars?.push({ user: userId, rating: userRating });
+      }
+
+      // Save the updated recipe
+      const ratingAdded = await updatedRecipe.save();
+
+      if (ratingAdded) {
+        return responseStatus(res, 200, msg.recipe.updated, updatedRecipe);
+      } else {
+        return responseStatus(res, 400, 'error updating recipe', null);
+      }
+    } catch (error) {
+      console.error(error);
+      return responseStatus(res, 500, 'An error occurred while updating recipe.', null);
+    }
+  };
+
+  //logged in user can comment on any recipe
+  AddComment = async (req: Request, res: Response) => {
+    try {
+      let recipeId = req.params.recipeId;
+      let userId = req.user?.id;
+      let userComment = req.body.comment;
+
+      let updatedRecipe = await RecipeSchema.findById(recipeId);
+      if (!updatedRecipe) {
+        return responseStatus(res, 400, msg.recipe.notFound, null);
+      }
+
+      //// Check if the user has already commented this recipe
+      const existingComment = updatedRecipe.comments?.find((comment) => comment.user.toString() === userId);
+
+      if (existingComment) {
+        // Update the existing comment
+        existingComment.comment = userComment;
+      } else {
+        // Add a new comment
+        updatedRecipe.comments?.push({ user: userId, comment: userComment });
+      }
+
+      // Save the updated recipe
+      const commnetAdded = await updatedRecipe.save();
+
+      if (commnetAdded) {
+        return responseStatus(res, 200, msg.recipe.updated, updatedRecipe);
+      } else {
+        return responseStatus(res, 400, 'error updating recipe', null);
       }
     } catch (error) {
       console.error(error);

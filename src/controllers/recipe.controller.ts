@@ -28,9 +28,33 @@ export const GetAllRecipes = (req: Request, res: Response) => {
   }
 };
 
-export const GetRecipeById = (req: Request, res: Response) => {
+export const GetRecipe = (req: Request, res: Response) => {
   try {
-    return recipeService.getRecipeById(req, res);
+    return recipeService.getRecipe(req, res);
+  } catch (error: any) {
+    return responseStatus(res, 500, error.message, error);
+  }
+};
+
+export const DeleteRecipe = (req: Request, res: Response) => {
+  try {
+    return recipeService.deleteRecipe(req, res);
+  } catch (error: any) {
+    return responseStatus(res, 500, error.message, error);
+  }
+};
+
+export const AddRating = (req: Request, res: Response) => {
+  try {
+    return recipeService.AddRating(req, res);
+  } catch (error: any) {
+    return responseStatus(res, 500, error.message, error);
+  }
+};
+
+export const AddComment = (req: Request, res: Response) => {
+  try {
+    return recipeService.AddComment(req, res);
   } catch (error: any) {
     return responseStatus(res, 500, error.message, error);
   }
