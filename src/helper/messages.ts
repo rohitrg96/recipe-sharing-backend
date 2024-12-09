@@ -9,6 +9,7 @@ export const msg = {
     notFound: 'User not found',
     alreadyExist: 'User already exists',
     emailExist: 'Email already registered',
+    fetched: 'User fetched successfully',
   },
   recipe: {
     added: 'Recipe added successfully',
