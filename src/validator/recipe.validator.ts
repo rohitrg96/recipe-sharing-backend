@@ -21,3 +21,17 @@ export const validateUpdateRecipe = validationMiddleware(
     preparationTime: Joi.number().optional().allow(null),
   }),
 );
+
+export const validateAddRating = validationMiddleware(
+  Joi.object({
+    recipeId: Joi.string().required(),
+    rating: Joi.number().integer().required().min(1).max(5),
+  }),
+);
+
+export const validateAddComment = validationMiddleware(
+  Joi.object({
+    recipeId: Joi.string().required(),
+    comment: Joi.string().required(),
+  }),
+);
