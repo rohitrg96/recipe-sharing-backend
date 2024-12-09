@@ -10,6 +10,8 @@ export const msg = {
     alreadyExist: 'User already exists',
     emailExist: 'Email already registered',
     fetched: 'User fetched successfully',
+    tokenNotFound: 'Token is required for logout',
+    tokenBlacklisted: 'Token blacklisted successfully',
   },
   recipe: {
     added: 'Recipe added successfully',
