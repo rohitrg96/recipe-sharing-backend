@@ -5,6 +5,7 @@ export interface IRecipe extends Document {
   ingredients: string[];
   steps: string[];
   image: string | null;
+  preparationTime?: number;
 }
 
 const recipeSchema: Schema = new Schema(
@@ -13,6 +14,7 @@ const recipeSchema: Schema = new Schema(
     ingredients: { type: [String], required: true },
     steps: { type: [String], required: true },
     image: { type: String },
+    preparationTime: { type: Number },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     deletedAt: { type: Date, default: null },
     stars: [

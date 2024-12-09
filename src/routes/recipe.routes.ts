@@ -7,5 +7,7 @@ let recipeRouter = express.Router();
 
 recipeRouter.post('/', validateAddRecipe, validateToken, recipesController.AddRecipe);
 recipeRouter.put('/:recipeId', validateUpdateRecipe, validateToken, recipesController.UpdateRecipe);
+recipeRouter.get('/:recipeId', validateToken, recipesController.GetRecipeById);
+recipeRouter.get('/', validateToken, recipesController.GetAllRecipes);
 
 export default recipeRouter;
