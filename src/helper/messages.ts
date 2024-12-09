@@ -13,6 +13,7 @@ export const msg = {
   recipe: {
     added: 'Recipe added successfully',
     updated: 'Recipe updated successfully',
+    fetched: 'Recipe fetched successfully',
     deleted: 'Recipe deleted successfully',
     alreadyExist: 'Recipe already exists',
     notFound: 'Recipe not found',

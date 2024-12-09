@@ -19,3 +19,19 @@ export const UpdateRecipe = (req: Request, res: Response) => {
     return responseStatus(res, 500, error.message, error);
   }
 };
+
+export const GetAllRecipes = (req: Request, res: Response) => {
+  try {
+    return recipeService.getAllRecipes(req, res);
+  } catch (error: any) {
+    return responseStatus(res, 500, error.message, error);
+  }
+};
+
+export const GetRecipeById = (req: Request, res: Response) => {
+  try {
+    return recipeService.getRecipeById(req, res);
+  } catch (error: any) {
+    return responseStatus(res, 500, error.message, error);
+  }
+};
