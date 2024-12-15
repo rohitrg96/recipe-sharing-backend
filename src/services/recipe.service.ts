@@ -6,8 +6,8 @@ import { UserSchema } from '../models/User';
 
 interface SearchFilters {
   ingredients?: string;
-  minRating?: number;
-  maxPreparationTime?: number;
+  minRating?: string;
+  maxPreparationTime?: string;
   page?: number;
   limit?: number;
   title?: string;
@@ -82,7 +82,14 @@ export class RecipeService {
 
   getAllRecipes = async (req: Request, res: Response) => {
     try {
-      const { ingredients, title, minRating, maxPreparationTime, page = 1, limit = 10 }: SearchFilters = req.query;
+      const {
+        ingredients,
+        title,
+        minRating,
+        maxPreparationTime,
+        page = 1,
+        limit = 10000000,
+      }: SearchFilters = req.query;
 
       const query: any = {};
       //search recipes based on ingrediants
@@ -98,16 +105,17 @@ export class RecipeService {
       }
 
       // Filter by minimum rating
-      if (minRating !== undefined) {
+      if (minRating !== undefined && minRating.trim() !== '') {
         query.rating = { $gte: +minRating };
       }
       // Filter by maximum preparation time
-      if (maxPreparationTime !== undefined) {
+      if (maxPreparationTime !== undefined && maxPreparationTime.trim() !== '') {
         query.preparationTime = { $lte: +maxPreparationTime };
       }
 
       const pageNumber = parseInt(page as unknown as string, 10);
       const limitNumber = parseInt(limit as unknown as string, 10);
+      console.log(query);
 
       let recipes = await RecipeSchema.find(query)
         .populate('user', 'firstName lastName email')
@@ -249,6 +257,22 @@ export class RecipeService {
       }
     } catch (error) {
       console.error(error);
+      return responseStatus(res, 500, 'An error occurred while updating recipe.', null);
+    }
+  };
+
+  uploadImage = async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return responseStatus(res, 400, msg.recipe.imageNotFound, null);
+      }
+
+      const data = {
+        url: `${process.env.PROTOCOL}://${process.env.HOST}:${process.env.PORT}/uploads/${req.file.filename}`,
+      };
+      return responseStatus(res, 200, msg.recipe.imageAdded, data);
+    } catch (error) {
+      console.error(error, 1);
       return responseStatus(res, 500, 'An error occurred while updating recipe.', null);
     }
   };
