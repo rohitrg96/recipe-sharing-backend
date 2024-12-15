@@ -20,5 +20,7 @@ export const msg = {
     deleted: 'Recipe deleted successfully',
     alreadyExist: 'Recipe already exists',
     notFound: 'Recipe not found',
+    imageAdded: 'Image added Successfully',
+    imageNotFound: 'Image Not Found',
   },
 };

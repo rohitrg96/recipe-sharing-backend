@@ -3,7 +3,7 @@ import { UserSchema } from '../models/User';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { responseStatus } from '../helper/response';
 import bcrypt from 'bcrypt';
-import { jwtConfig } from '../config/config';
+import { jwtConfig } from '../config/jwtconfig';
 import { msg } from '../helper/messages';
 import { blacklistToken } from '../middleware/authorization/authFunction';
 
