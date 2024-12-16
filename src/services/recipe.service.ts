@@ -51,7 +51,10 @@ export class RecipeService {
       let recipe: IRecipe = req.body;
       let userId = req.user?.id;
 
-      let recipeExist = await RecipeSchema.findOne({ _id: recipeId, user: userId });
+      let recipeExist = await RecipeSchema.findOne({
+        _id: recipeId,
+        user: userId,
+      });
       if (!recipeExist) {
         return responseStatus(res, 400, msg.recipe.notFound, null);
       }
@@ -104,10 +107,6 @@ export class RecipeService {
         query.title = new RegExp(title, 'i');
       }
 
-      // Filter by minimum rating
-      if (minRating !== undefined && minRating.trim() !== '') {
-        query.rating = { $gte: +minRating };
-      }
       // Filter by maximum preparation time
       if (maxPreparationTime !== undefined && maxPreparationTime.trim() !== '') {
         query.preparationTime = { $lte: +maxPreparationTime };
@@ -115,18 +114,33 @@ export class RecipeService {
 
       const pageNumber = parseInt(page as unknown as string, 10);
       const limitNumber = parseInt(limit as unknown as string, 10);
-      console.log(query);
 
       let recipes = await RecipeSchema.find(query)
         .populate('user', 'firstName lastName email')
         .populate('stars.user', 'firstName lastName email')
-        .skip((pageNumber - 1) * limitNumber)
-        .limit(limitNumber);
+        .lean();
 
-      const totalRecipes = await RecipeSchema.countDocuments(query);
+      let updatedRecipes = recipes.map((recipe) => {
+        const starsCount = recipe.stars ? recipe.stars.length : 0;
+        const averageStars =
+          starsCount > 0 && recipe.stars ? recipe.stars.reduce((sum, star) => sum + star.rating, 0) / starsCount : 0;
+        return {
+          ...recipe,
+          starsCount,
+          averageStars,
+        };
+      });
+      // Filter by minimum rating
+
+      if (minRating) {
+        updatedRecipes = updatedRecipes.filter((recipe) => recipe.averageStars >= +minRating);
+      }
+      // const totalRecipes = await RecipeSchema.countDocuments(query);
+      const totalRecipes = updatedRecipes.length;
+      const paginatedRecipes = updatedRecipes.slice((pageNumber - 1) * limitNumber, pageNumber * limitNumber);
 
       const finalData = {
-        data: recipes,
+        data: paginatedRecipes,
         pagination: {
           total: totalRecipes,
           page: pageNumber,
@@ -171,10 +185,10 @@ export class RecipeService {
       let recipeId = req.params.recipeId;
       let userId = req.user?.id;
 
-      let deleteRecipe = await RecipeSchema.findByIdAndDelete({ _id: recipeId, user: userId }).populate(
-        'user',
-        'firstName lastName email',
-      );
+      let deleteRecipe = await RecipeSchema.findByIdAndDelete({
+        _id: recipeId,
+        user: userId,
+      }).populate('user', 'firstName lastName email');
 
       if (deleteRecipe) {
         return responseStatus(res, 200, msg.recipe.deleted, deleteRecipe);
@@ -255,6 +269,34 @@ export class RecipeService {
       } else {
         return responseStatus(res, 400, 'error updating recipe', null);
       }
+    } catch (error) {
+      console.error(error);
+      return responseStatus(res, 500, 'An error occurred while updating recipe.', null);
+    }
+  };
+
+  CheckUserCommentAndRating = async (req: Request, res: Response) => {
+    try {
+      let recipeId = req.params.recipeId;
+      let userId = req.user?.id;
+
+      let recipeDetails = await RecipeSchema.findOne({ _id: recipeId });
+
+      const checkIfUserhasCommented = recipeDetails?.comments?.find((c) => {
+        return c.user._id == userId;
+      });
+
+      const checkIfUserhasRated = recipeDetails?.stars?.find((s) => {
+        return s.user._id == userId;
+      });
+
+      const data = {
+        userCommented: checkIfUserhasCommented ? true : false,
+        userRated: checkIfUserhasRated ? true : false,
+        checkIfUserhasCommented,
+        checkIfUserhasRated,
+      };
+      return responseStatus(res, 200, 'User feedback on recipe', data);
     } catch (error) {
       console.error(error);
       return responseStatus(res, 500, 'An error occurred while updating recipe.', null);

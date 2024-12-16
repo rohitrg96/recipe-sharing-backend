@@ -60,6 +60,14 @@ export const AddComment = (req: Request, res: Response) => {
   }
 };
 
+export const CheckUserCommentAndRating = (req: Request, res: Response) => {
+  try {
+    return recipeService.CheckUserCommentAndRating(req, res);
+  } catch (error: any) {
+    return responseStatus(res, 500, error.message, error);
+  }
+};
+
 export const AddImage = (req: Request, res: Response) => {
   try {
     console.log(1);
