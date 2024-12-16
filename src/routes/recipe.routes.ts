@@ -19,5 +19,5 @@ recipeRouter.delete('/:recipeId', validateToken, recipesController.DeleteRecipe)
 recipeRouter.put('/rating/:recipeId', validateAddRating, validateToken, recipesController.AddRating);
 recipeRouter.put('/comment/:recipeId', validateAddComment, validateToken, recipesController.AddComment);
 recipeRouter.post('/upload-image', validateToken, upload.single('image'), recipesController.AddImage);
-
+recipeRouter.get('/user-feedback/:recipeId', validateToken, recipesController.CheckUserCommentAndRating);
 export default recipeRouter;
