@@ -3,15 +3,18 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db';
 import apiRouter from './routes/api.routes';
+import path from 'path';
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5080;
 
 // Middleware
 app.use(express.json());
 app.use(cors());
+
+app.use('/uploads', express.static(path.join('uploads')));
 
 // Database connection
 connectDB();

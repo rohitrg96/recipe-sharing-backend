@@ -59,3 +59,20 @@ export const AddComment = (req: Request, res: Response) => {
     return responseStatus(res, 500, error.message, error);
   }
 };
+
+export const CheckUserCommentAndRating = (req: Request, res: Response) => {
+  try {
+    return recipeService.CheckUserCommentAndRating(req, res);
+  } catch (error: any) {
+    return responseStatus(res, 500, error.message, error);
+  }
+};
+
+export const AddImage = (req: Request, res: Response) => {
+  try {
+    console.log(1);
+    return recipeService.uploadImage(req, res);
+  } catch (error: any) {
+    return responseStatus(res, 500, error.message, error);
+  }
+};
