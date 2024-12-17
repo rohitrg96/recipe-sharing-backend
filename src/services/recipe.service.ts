@@ -3,6 +3,8 @@ import { IRecipe, RecipeSchema } from '../models/Recipe';
 import { responseStatus } from '../helper/response';
 import { msg } from '../helper/messages';
 import { UserSchema } from '../models/User';
+import { v2 as cloudinary } from 'cloudinary';
+import configureCloudinary from '../config/multer';
 
 interface SearchFilters {
   ingredients?: string;
@@ -309,10 +311,20 @@ export class RecipeService {
         return responseStatus(res, 400, msg.recipe.imageNotFound, null);
       }
 
-      const data = {
-        url: `${process.env.PROTOCOL}://${process.env.HOST}:${process.env.PORT}/uploads/${req.file.filename}`,
-      };
-      return responseStatus(res, 200, msg.recipe.imageAdded, data);
+      configureCloudinary();
+
+      cloudinary.uploader
+        .upload_stream(
+          { resource_type: 'auto', folder: 'tasty-tales-images' }, // Automatically detect the file type (image, video, etc.)
+          (error, result) => {
+            if (error) {
+              console.log(error);
+              return responseStatus(res, 400, msg.recipe.imageNotFound, null);
+            }
+            return responseStatus(res, 200, msg.recipe.imageAdded, { url: result?.secure_url });
+          },
+        )
+        .end(req.file.buffer); // Send the file buffer to Cloudinary
     } catch (error) {
       console.error(error, 1);
       return responseStatus(res, 500, 'An error occurred while updating recipe.', null);

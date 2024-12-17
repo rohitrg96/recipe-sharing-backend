@@ -70,7 +70,6 @@ export const CheckUserCommentAndRating = (req: Request, res: Response) => {
 
 export const AddImage = (req: Request, res: Response) => {
   try {
-    console.log(1);
     return recipeService.uploadImage(req, res);
   } catch (error: any) {
     return responseStatus(res, 500, error.message, error);
