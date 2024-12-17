@@ -7,7 +7,8 @@ import {
   validateAddComment,
 } from '../validator/recipe.validator';
 import { validateToken } from '../middleware/authorization/authFunction';
-import upload from '../config/multer';
+import multer from 'multer';
+const upload = multer();
 
 let recipeRouter = express.Router();
 
