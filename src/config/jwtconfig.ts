@@ -1,4 +1,4 @@
 export const jwtConfig = {
-  secret: 'recipbackend901091',
-  expiresIn: '2h',
+  secret: `${process.env.JWT_SECRET}`,
+  expiresIn: '1d',
 };
