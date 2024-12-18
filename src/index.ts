@@ -11,7 +11,11 @@ const port = process.env.PORT || 5080;
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: ['http://localhost:5173', 'https://recipe-sharing-frontend-sand.vercel.app'],
+  }),
+);
 
 // Database connection
 connectDB();
