@@ -220,7 +220,7 @@ export class RecipeService {
 
       if (existingRating) {
         // Update the existing rating
-        existingRating.rating = userRating;
+        return responseStatus(res, 409, msg.recipe, null);
       } else {
         // Add a new rating
         updatedRecipe.stars?.push({ user: userId, rating: userRating });

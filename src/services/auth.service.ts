@@ -30,7 +30,7 @@ export class AuthService {
           return responseStatus(res, 400, msg.user.invalidCredentials, null);
         }
       } else {
-        console.log('Invalid credentials');
+        console.log('Invalid credentials'); //
 
         return responseStatus(res, 400, msg.user.invalidCredentials, null);
       }
