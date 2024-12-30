@@ -19,6 +19,7 @@ export const msg = {
     fetched: 'Recipe fetched successfully',
     deleted: 'Recipe deleted successfully',
     alreadyExist: 'Recipe already exists',
+    alreadyRated: 'Recipe already rated',
     notFound: 'Recipe not found',
     imageAdded: 'Image added Successfully',
     imageNotFound: 'Image Not Found',
