@@ -120,6 +120,7 @@ export class RecipeService {
       let recipes = await RecipeSchema.find(query)
         .populate('user', 'firstName lastName email')
         .populate('stars.user', 'firstName lastName email')
+        .sort({ createdAt: -1 })
         .lean();
 
       let updatedRecipes = recipes.map((recipe) => {
