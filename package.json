@@ -28,7 +28,8 @@
     "multer-storage-cloudinary": "^4.0.0",
     "node-cache": "^5.1.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
@@ -37,6 +38,7 @@
     "@types/joi": "^17.2.2",
     "@types/mongoose": "^5.11.96",
     "@types/multer": "^1.4.12",
+    "@types/winston": "^2.4.4",
     "nodemon": "^3.1.7"
   }
 }

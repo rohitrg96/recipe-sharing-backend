@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db';
 import apiRouter from './routes/api.routes';
+import { errorHandler } from './middleware/errorHandler/errorHandler';
 
 dotenv.config();
 
@@ -23,7 +24,10 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/api', apiRouter);
 
-// app.listen(port, () => {
-//   console.log(`Server is running on port ${port}`);
-// });
+// Global error handler
+app.use(errorHandler);
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
 export default app;

@@ -4,7 +4,7 @@ import { responseStatus } from '../helper/response';
 
 let authService = new AuthService();
 
-export const login = (req: Request, res: Response, next: NextFunction) => {
+export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     return authService.login(req, res, next);
   } catch (error: any) {
@@ -12,9 +12,9 @@ export const login = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export const logout = (req: Request, res: Response) => {
+export const logout = (req: Request, res: Response, next: NextFunction) => {
   try {
-    return authService.logout(req, res);
+    return authService.logout(req, res, next);
   } catch (error: any) {
     return responseStatus(res, 500, error.message, error);
   }
