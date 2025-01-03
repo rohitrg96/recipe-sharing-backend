@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { UserSchema } from '../models/User';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { responseStatus } from '../helper/response';
@@ -8,10 +8,10 @@ import { msg } from '../helper/messages';
 import { blacklistToken } from '../middleware/authorization/authFunction';
 
 export class AuthService {
-  login = async (req: Request, res: Response) => {
+  login = async (req: Request, res: Response, next: NextFunction) => {
     try {
       let username = req.body.userName;
-      let password = req.body.password;
+      let password = req.body.passwords;
       let dbUser = await UserSchema.findOne({ email: username });
       if (dbUser) {
         let isValidPass = bcrypt.compareSync(password, dbUser.password);
@@ -30,13 +30,14 @@ export class AuthService {
           return responseStatus(res, 400, msg.user.invalidCredentials, null);
         }
       } else {
-        console.log('Invalid credentials'); //
+        console.log('User Not Found'); //
 
-        return responseStatus(res, 400, msg.user.invalidCredentials, null);
+        return responseStatus(res, 400, msg.user.notFound, null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      return responseStatus(res, 500, 'An error occurred while logging In.', null);
+      next(error);
+      // return responseStatus(res, 500, 'An error occurred while logging In.', null);
     }
   };
 
