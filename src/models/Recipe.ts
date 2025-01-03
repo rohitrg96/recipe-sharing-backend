@@ -45,4 +45,10 @@ const recipeSchema: Schema = new Schema(
   { timestamps: true },
 );
 
+// Create indexes on title, ingredients, preparationTime, and stars.rating.
+recipeSchema.index({ title: 1 });
+recipeSchema.index({ ingredients: 1 });
+recipeSchema.index({ preparationTime: 1 });
+recipeSchema.index({ 'stars.rating': 1 });
+
 export const RecipeSchema = mongoose.model<IRecipe>('Recipe', recipeSchema);

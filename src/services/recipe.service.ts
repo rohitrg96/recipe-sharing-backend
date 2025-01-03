@@ -5,6 +5,7 @@ import { msg } from '../helper/messages';
 import { UserSchema } from '../models/User';
 import { v2 as cloudinary } from 'cloudinary';
 import configureCloudinary from '../config/multer';
+import { PipelineStage } from 'mongoose';
 
 interface SearchFilters {
   ingredients?: string;
@@ -117,33 +118,39 @@ export class RecipeService {
       const pageNumber = parseInt(page as unknown as string, 10);
       const limitNumber = parseInt(limit as unknown as string, 10);
 
-      let recipes = await RecipeSchema.find(query)
-        .populate('user', 'firstName lastName email')
-        .populate('stars.user', 'firstName lastName email')
-        .sort({ createdAt: -1 })
-        .lean();
+      // Aggregation pipeline for fetching recipes with starsCount and averageStars
 
-      let updatedRecipes = recipes.map((recipe) => {
-        const starsCount = recipe.stars ? recipe.stars.length : 0;
-        const averageStars =
-          starsCount > 0 && recipe.stars ? recipe.stars.reduce((sum, star) => sum + star.rating, 0) / starsCount : 0;
-        return {
-          ...recipe,
-          starsCount,
-          averageStars,
-        };
-      });
-      // Filter by minimum rating
+      const aggregationPipeline: PipelineStage[] = [
+        { $match: query },
+        {
+          $addFields: {
+            starsCount: { $size: { $ifNull: ['$stars', []] } }, // Safely count stars
+            averageStars: {
+              $cond: [
+                { $eq: [{ $size: { $ifNull: ['$stars', []] } }, 0] }, // Check if no stars
+                0,
+                {
+                  $divide: [
+                    { $sum: '$stars.rating' }, // Sum of ratings
+                    { $size: { $ifNull: ['$stars', []] } }, // Count of ratings
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        { $match: { averageStars: { $gte: Number(minRating) || 0 } } }, // Filter by averageStars
+        { $sort: { createdAt: -1 } }, // Sort by createdAt
+        { $skip: (pageNumber - 1) * limitNumber }, // Pagination
+        { $limit: limitNumber }, // Pagination
+      ];
 
-      if (minRating) {
-        updatedRecipes = updatedRecipes.filter((recipe) => recipe.averageStars >= +minRating);
-      }
-      // const totalRecipes = await RecipeSchema.countDocuments(query);
-      const totalRecipes = updatedRecipes.length;
-      const paginatedRecipes = updatedRecipes.slice((pageNumber - 1) * limitNumber, pageNumber * limitNumber);
+      let recipes = await RecipeSchema.aggregate(aggregationPipeline).exec();
+
+      const totalRecipes = await RecipeSchema.countDocuments(query);
 
       const finalData = {
-        data: paginatedRecipes,
+        data: recipes,
         pagination: {
           total: totalRecipes,
           page: pageNumber,
