@@ -60,17 +60,17 @@ export const AddComment = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export const CheckUserCommentAndRating = (req: Request, res: Response) => {
+export const CheckUserCommentAndRating = (req: Request, res: Response, next: NextFunction) => {
   try {
-    return recipeService.CheckUserCommentAndRating(req, res);
+    return recipeService.CheckUserCommentAndRating(req, res, next);
   } catch (error: any) {
     return responseStatus(res, 500, error.message, error);
   }
 };
 
-export const AddImage = (req: Request, res: Response) => {
+export const AddImage = (req: Request, res: Response, next: NextFunction) => {
   try {
-    return recipeService.uploadImage(req, res);
+    return recipeService.uploadImage(req, res, next);
   } catch (error: any) {
     return responseStatus(res, 500, error.message, error);
   }

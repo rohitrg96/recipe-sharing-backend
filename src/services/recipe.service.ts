@@ -317,18 +317,22 @@ export class RecipeService {
     }
   };
 
-  CheckUserCommentAndRating = async (req: Request, res: Response) => {
+  CheckUserCommentAndRating = async (req: Request, res: Response, next: NextFunction) => {
     try {
       let recipeId = req.params.recipeId;
       let userId = req.user?.id;
 
       let recipeDetails = await RecipeSchema.findOne({ _id: recipeId });
+      if (!recipeDetails) {
+        // Throw CustomError if the recipe is not found
+        throw new CustomError(msg.recipe.notFound, 400);
+      }
 
-      const checkIfUserhasCommented = recipeDetails?.comments?.find((c) => {
+      const checkIfUserhasCommented = recipeDetails.comments?.find((c) => {
         return c.user._id == userId;
       });
 
-      const checkIfUserhasRated = recipeDetails?.stars?.find((s) => {
+      const checkIfUserhasRated = recipeDetails.stars?.find((s) => {
         return s.user._id == userId;
       });
 
@@ -338,17 +342,20 @@ export class RecipeService {
         checkIfUserhasCommented,
         checkIfUserhasRated,
       };
+
       return responseStatus(res, 200, 'User feedback on recipe', data);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      return responseStatus(res, 500, 'An error occurred while updating recipe.', null);
+      // Forward the error to the global error handler
+      next(error);
     }
   };
 
-  uploadImage = async (req: Request, res: Response) => {
+  uploadImage = async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.file) {
-        return responseStatus(res, 400, msg.recipe.imageNotFound, null);
+        // Throw CustomError if no file is uploaded
+        throw new CustomError(msg.recipe.imageNotFound, 400);
       }
 
       configureCloudinary();
@@ -359,15 +366,17 @@ export class RecipeService {
           (error, result) => {
             if (error) {
               console.log(error);
-              return responseStatus(res, 400, msg.recipe.imageNotFound, null);
+              // Throw CustomError for Cloudinary upload failure
+              return next(new CustomError(msg.recipe.imageNotFound, 400));
             }
             return responseStatus(res, 200, msg.recipe.imageAdded, { url: result?.secure_url });
           },
         )
         .end(req.file.buffer); // Send the file buffer to Cloudinary
-    } catch (error) {
-      console.error(error, 1);
-      return responseStatus(res, 500, 'An error occurred while updating recipe.', null);
+    } catch (error: any) {
+      console.error(error);
+      // Forward the error to the global error handler
+      next(error);
     }
   };
 }
