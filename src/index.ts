@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import connectDB from './config/db';
 import apiRouter from './routes/api.routes';
 import { errorHandler } from './middleware/errorHandler/errorHandler';
+import rateLimiter from './middleware/security/rateLimiter';
+import { applyCSP } from './middleware/security/csp';
 
 dotenv.config();
 
@@ -13,6 +15,8 @@ const port = process.env.PORT || 5080;
 // Middleware
 app.use(express.json());
 app.use(cors());
+app.use(rateLimiter);
+app.use(applyCSP);
 
 // Database connection
 connectDB();
