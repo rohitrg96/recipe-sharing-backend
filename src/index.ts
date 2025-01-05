@@ -27,7 +27,7 @@ app.use('/api', apiRouter);
 // Global error handler
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+// app.listen(port, () => {
+//   console.log(`Server is running on port ${port}`);
+// });
 export default app;
