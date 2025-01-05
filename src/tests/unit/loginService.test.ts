@@ -57,35 +57,40 @@ describe('AuthService login', () => {
     });
   });
 
-  // it('should return 400 for invalid credentials (wrong password)', async () => {
-  //   // Arrange
-  //   const mockUser = {
-  //     email: 'test@example.com',
-  //     password: bcrypt.hashSync('password123', 10), // hashed password
-  //     _id: '12345',
-  //   };
+  it('should return 400 for invalid credentials (wrong password)', async () => {
+    // Arrange
+    const mockUser = {
+      email: 'test@example.com',
+      password: bcrypt.hashSync('password123', 10), // hashed password
+      _id: '12345',
+    };
 
-  //   // Mock database query and bcrypt.compareSync
-  //   UserSchema.findOne = jest.fn().mockResolvedValue(mockUser);
-  //   bcrypt.compareSync = jest.fn().mockReturnValue(false);
+    // Mock database query and bcrypt.compareSync
+    UserSchema.findOne = jest.fn().mockResolvedValue(mockUser);
+    bcrypt.compareSync = jest.fn().mockReturnValue(false);
 
-  //   const loginData = {
-  //     userName: 'test@example.com',
-  //     password: 'wrongpassword',
-  //   };
+    const loginData = {
+      userName: 'test@example.com',
+      password: 'wrongpassword',
+    };
 
-  //   // Act
-  //   const res = {
-  //     status: jest.fn().mockReturnThis(),
-  //     json: jest.fn(),
-  //   };
+    // Act
+    const req = {
+      body: loginData,
+    } as Request; // Cast to Request type
 
-  //   await authService.login({ body: loginData }, res);
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as unknown as Response;
 
-  //   // Assert
-  //   expect(res.status).toHaveBeenCalledWith(400);
-  //   expect(res.json).toHaveBeenCalledWith({ message: 'Invalid credentials' });
-  // });
+
+    await authService.login(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Invalid credentials' });
+  });
 
   // it('should return 400 for non-existing user', async () => {
   //   // Arrange
