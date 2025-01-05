@@ -1,112 +1,134 @@
-// import { Request, Response } from 'express';
-// import {AuthService} from '../../services/auth.service'; // Adjust path as needed
-// import UserSchema from '../../models/UserSchema'; // Adjust path as needed
-// import bcrypt from 'bcrypt';
-// import jwt from 'jsonwebtoken';
-// import responseStatus from '../../utils/responseStatus'; // Your response utility
+import { AuthService } from '../../services/auth.service'; // Update path as necessary
+import { UserSchema } from '../../models/User';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { responseStatus } from '../../helper/response';
+import { Request, Response } from 'express';
 
-// let authService = new AuthService();
+// Mock dependencies
+jest.mock('../../models/User');
+jest.mock('bcrypt');
+jest.mock('jsonwebtoken');
 
-// jest.mock('../../models/UserSchema');
-// jest.mock('bcrypt');
-// jest.mock('jsonwebtoken');
-// jest.mock('../../utils/responseStatus');
+describe('AuthService login', () => {
+  let authService: AuthService;
 
-// describe('Login Service', () => {
-//   const mockRequest = (body: any): Request => {
-//     return {
-//       body,
-//     } as Request;
-//   };
+  beforeAll(() => {
+    authService = new AuthService();
+  });
 
-//   const mockResponse = (): Response => {
-//     const res: Partial<Response> = {};
-//     res.status = jest.fn().mockReturnThis();
-//     res.json = jest.fn();
-//     return res as Response;
-//   };
+  it('should return 200 and a token for valid credentials', async () => {
+    // Arrange
+    const mockUser = {
+      email: 'test@example.com',
+      password: bcrypt.hashSync('password123', 10), // hashed password
+    };
+    const token = 'mock-jwt-token';
 
-//   afterEach(() => {
-//     jest.clearAllMocks();
-//   });
+    // Mock database query and bcrypt.compareSync
+    UserSchema.findOne = jest.fn().mockResolvedValue(mockUser);
+    bcrypt.compareSync = jest.fn().mockReturnValue(true);
+    jwt.sign = jest.fn().mockReturnValue(token);
 
-//   it('should return a token for valid credentials', async () => {
-//     const req = mockRequest({ userName: 'test@example.com', password: 'password123' });
-//     const res = mockResponse();
+    const loginData = {
+      userName: 'rohit12@gmil.com',
+      password: '123456',
+    };
 
-//     const mockUser = {
-//       email: 'test@example.com',
-//       password: 'hashedPassword',
-//       _id: 'userId123',
-//     };
+    // Act
+    const req = {
+      body: loginData,
+    } as Request; // Cast to Request type
 
-//     // Mock dependencies
-//     (UserSchema.findOne as jest.Mock).mockResolvedValue(mockUser);
-//     (bcrypt.compareSync as jest.Mock).mockReturnValue(true);
-//     (jwt.sign as jest.Mock).mockReturnValue('mockToken');
-//     const mockResponseStatus = jest.fn();
-//     (responseStatus as jest.Mock).mockImplementation(mockResponseStatus);
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as unknown as Response;
 
-//     await login(req, res);
+    await authService.login(req, res);
 
-//     expect(UserSchema.findOne).toHaveBeenCalledWith({ email: 'test@example.com' });
-//     expect(bcrypt.compareSync).toHaveBeenCalledWith('password123', 'hashedPassword');
-//     expect(jwt.sign).toHaveBeenCalledWith(
-//       { email: 'test@example.com', id: 'userId123' },
-//       expect.any(String), // secret
-//       { expiresIn: expect.any(String) } // expiration
-//     );
-//     expect(mockResponseStatus).toHaveBeenCalledWith(res, 200, expect.any(String), { token: 'mockToken' });
-//   });
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Logged in successfully',
+      data: { token },
+      status: 200,
+      statusMessage: 'Success',
+    });
+  });
 
-//   it('should return 400 for invalid password', async () => {
-//     const req = mockRequest({ userName: 'test@example.com', password: 'wrongPassword' });
-//     const res = mockResponse();
+  // it('should return 400 for invalid credentials (wrong password)', async () => {
+  //   // Arrange
+  //   const mockUser = {
+  //     email: 'test@example.com',
+  //     password: bcrypt.hashSync('password123', 10), // hashed password
+  //     _id: '12345',
+  //   };
 
-//     const mockUser = {
-//       email: 'test@example.com',
-//       password: 'hashedPassword',
-//       _id: 'userId123',
-//     };
+  //   // Mock database query and bcrypt.compareSync
+  //   UserSchema.findOne = jest.fn().mockResolvedValue(mockUser);
+  //   bcrypt.compareSync = jest.fn().mockReturnValue(false);
 
-//     // Mock dependencies
-//     (UserSchema.findOne as jest.Mock).mockResolvedValue(mockUser);
-//     (bcrypt.compareSync as jest.Mock).mockReturnValue(false);
-//     const mockResponseStatus = jest.fn();
-//     (responseStatus as jest.Mock).mockImplementation(mockResponseStatus);
+  //   const loginData = {
+  //     userName: 'test@example.com',
+  //     password: 'wrongpassword',
+  //   };
 
-//     await login(req, res);
+  //   // Act
+  //   const res = {
+  //     status: jest.fn().mockReturnThis(),
+  //     json: jest.fn(),
+  //   };
 
-//     expect(UserSchema.findOne).toHaveBeenCalledWith({ email: 'test@example.com' });
-//     expect(bcrypt.compareSync).toHaveBeenCalledWith('wrongPassword', 'hashedPassword');
-//     expect(mockResponseStatus).toHaveBeenCalledWith(res, 400, expect.any(String), null);
-//   });
+  //   await authService.login({ body: loginData }, res);
 
-//   it('should return 400 if the user does not exist', async () => {
-//     const req = mockRequest({ userName: 'nonexistent@example.com', password: 'password123' });
-//     const res = mockResponse();
+  //   // Assert
+  //   expect(res.status).toHaveBeenCalledWith(400);
+  //   expect(res.json).toHaveBeenCalledWith({ message: 'Invalid credentials' });
+  // });
 
-//     (UserSchema.findOne as jest.Mock).mockResolvedValue(null);
-//     const mockResponseStatus = jest.fn();
-//     (responseStatus as jest.Mock).mockImplementation(mockResponseStatus);
+  // it('should return 400 for non-existing user', async () => {
+  //   // Arrange
+  //   UserSchema.findOne = jest.fn().mockResolvedValue(null);
 
-//     await login(req, res);
+  //   const loginData = {
+  //     userName: 'nonexistent@example.com',
+  //     password: 'password123',
+  //   };
 
-//     expect(UserSchema.findOne).toHaveBeenCalledWith({ email: 'nonexistent@example.com' });
-//     expect(mockResponseStatus).toHaveBeenCalledWith(res, 400, expect.any(String), null);
-//   });
+  //   // Act
+  //   const res = {
+  //     status: jest.fn().mockReturnThis(),
+  //     json: jest.fn(),
+  //   };
 
-//   it('should return 500 for internal errors', async () => {
-//     const req = mockRequest({ userName: 'test@example.com', password: 'password123' });
-//     const res = mockResponse();
+  //   await authService.login({ body: loginData }, res);
 
-//     (UserSchema.findOne as jest.Mock).mockRejectedValue(new Error('Database error'));
-//     const mockResponseStatus = jest.fn();
-//     (responseStatus as jest.Mock).mockImplementation(mockResponseStatus);
+  //   // Assert
+  //   expect(res.status).toHaveBeenCalledWith(400);
+  //   expect(res.json).toHaveBeenCalledWith({ message: 'Invalid credentials' });
+  // });
 
-//     await login(req, res);
+  // it('should return 500 if an error occurs', async () => {
+  //   // Arrange
+  //   const errorMessage = 'Database error';
+  //   UserSchema.findOne = jest.fn().mockRejectedValue(new Error(errorMessage));
 
-//     expect(UserSchema.findOne).toHaveBeenCalledWith({ email: 'test@example.com' });
-//     expect(mockResponseStatus).toHaveBeenCalledWith(res, 500, 'An error occurred while logging In.', null);
-//   });
-// });
+  //   const loginData = {
+  //     userName: 'test@example.com',
+  //     password: 'password123',
+  //   };
+
+  //   // Act
+  //   const res = {
+  //     status: jest.fn().mockReturnThis(),
+  //     json: jest.fn(),
+  //   };
+
+  //   await authService.login({ body: loginData }, res);
+
+  //   // Assert
+  //   expect(res.status).toHaveBeenCalledWith(500);
+  //   expect(res.json).toHaveBeenCalledWith({ message: 'An error occurred while logging In.' });
+  // });
+});

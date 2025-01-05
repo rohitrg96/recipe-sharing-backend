@@ -1,16 +1,13 @@
-import type { Config } from 'jest';
-
-const config: Config = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src'], // Adjust based on your folder structure
-  transform: {
-    '^.+\\.tsx?$': 'ts-jest',
+module.exports = {
+  preset: 'ts-jest', // Tells Jest to use ts-jest preset for TypeScript
+  testEnvironment: 'node', // Use the Node.js environment for tests
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.json', // Path to your tsconfig file
+    },
   },
-  testMatch: ['**/__tests__/**/*.+(ts|tsx|js)', '**/?(*.)+(spec|test).+(ts|tsx|js)'],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'json', 'node'],
-  coverageDirectory: 'coverage', // Coverage report
-  collectCoverageFrom: ['src/**/*.ts'], // Coverage for TS files only
+  moduleFileExtensions: ['js', 'ts'], // Ensure Jest looks for .ts files
+  transform: {
+    '^.+\\.ts$': 'ts-jest', // Transforms TypeScript files using ts-jest
+  },
 };
-
-export default config;
