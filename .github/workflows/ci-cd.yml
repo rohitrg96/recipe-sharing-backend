@@ -28,15 +28,22 @@ jobs:
         run: |
           npm install
 
+      # Set Cloudinary environment variables from GitHub Secrets before running tests
+      - name: Set Cloudinary environment variables
+        run: |
+          echo "CLOUD_NAME=${{ secrets.CLOUD_NAME }}" >> $GITHUB_ENV
+          echo "CLOUD_API_KEY=${{ secrets.CLOUD_API_KEY }}" >> $GITHUB_ENV
+          echo "CLOUD_API_SECRET=${{ secrets.CLOUD_API_SECRET }}" >> $GITHUB_ENV
+
       # Compile TypeScript
       - name: Build TypeScript
         run: |
-          npm run build  # Make sure you have a build script in package.json
+          npm run build
 
-      # Run tests (optional)
+      # Run tests
       - name: Run tests
         run: |
-          npm test  # Ensure you have test scripts like Jest, Mocha, etc.
+          npm test
 
   deploy:
     runs-on: ubuntu-latest
@@ -59,7 +66,7 @@ jobs:
         run: |
           npm install
 
-      # Deploy to production (for dev branch)
+      # Deploy to Vercel (for dev branch)
       - name: Deploy to Vercel
         run: |
           vercel --prod --token ${{ secrets.VERCEL_TOKEN }}  # Add Vercel token as GitHub secret
