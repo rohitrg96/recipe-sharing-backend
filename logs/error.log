@@ -55,3 +55,14 @@
     at Generator.next (<anonymous>)
     at fulfilled (D:\Receipe Sharing App\ReceipeSharingBackend\recipe-sharing-backend\src\services\auth.service.ts:5:58)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-01-06T09:31:25.246Z [error]: stream is not readable InternalServerError: stream is not readable
+    at readStream (D:\Receipe Sharing App\ReceipeSharingBackend\recipe-sharing-backend\node_modules\raw-body\index.js:185:17)
+    at getRawBody (D:\Receipe Sharing App\ReceipeSharingBackend\recipe-sharing-backend\node_modules\raw-body\index.js:116:12)
+    at read (D:\Receipe Sharing App\ReceipeSharingBackend\recipe-sharing-backend\node_modules\body-parser\lib\read.js:79:3)
+    at jsonParser (D:\Receipe Sharing App\ReceipeSharingBackend\recipe-sharing-backend\node_modules\body-parser\lib\types\json.js:138:5)
+    at Layer.handle [as handle_request] (D:\Receipe Sharing App\ReceipeSharingBackend\recipe-sharing-backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (D:\Receipe Sharing App\ReceipeSharingBackend\recipe-sharing-backend\node_modules\express\lib\router\index.js:328:13)
+    at D:\Receipe Sharing App\ReceipeSharingBackend\recipe-sharing-backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (D:\Receipe Sharing App\ReceipeSharingBackend\recipe-sharing-backend\node_modules\express\lib\router\index.js:346:12)
+    at next (D:\Receipe Sharing App\ReceipeSharingBackend\recipe-sharing-backend\node_modules\express\lib\router\index.js:280:10)
+    at expressInit (D:\Receipe Sharing App\ReceipeSharingBackend\recipe-sharing-backend\node_modules\express\lib\middleware\init.js:40:5)
