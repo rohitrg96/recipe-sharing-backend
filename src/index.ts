@@ -6,6 +6,8 @@ import apiRouter from './routes/api.routes';
 import { errorHandler } from './middleware/errorHandler/errorHandler';
 import rateLimiter from './middleware/security/rateLimiter';
 import { applyCSP } from './middleware/security/csp';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger';
 
 dotenv.config();
 
@@ -14,7 +16,13 @@ const port = process.env.PORT || 5080;
 
 // Middleware
 app.use(express.json());
+
+//swagger setup
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.use(cors());
+
+//security measures
 app.use(rateLimiter);
 app.use(applyCSP);
 
