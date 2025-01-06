@@ -3,10 +3,10 @@ name: Node.js CI/CD Pipeline
 on:
   push:
     branches:
-      - main # Run the pipeline only on pushes to the main branch
+      - dev # Run the pipeline only on pushes to the dev branch
   pull_request:
     branches:
-      - main
+      - dev # Run the pipeline only on pull requests targeting dev
 
 jobs:
   build:
@@ -59,7 +59,7 @@ jobs:
         run: |
           npm install
 
-      # Deploy to production
+      # Deploy to production (for dev branch)
       - name: Deploy to Vercel
         run: |
           vercel --prod --token ${{ secrets.VERCEL_TOKEN }}  # Add Vercel token as GitHub secret
