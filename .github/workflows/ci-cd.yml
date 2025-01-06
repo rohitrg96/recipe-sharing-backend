@@ -1,0 +1,65 @@
+name: Node.js CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main # Run the pipeline only on pushes to the main branch
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16' # Specify the Node.js version you want to use
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          npm install
+
+      # Compile TypeScript
+      - name: Build TypeScript
+        run: |
+          npm run build  # Make sure you have a build script in package.json
+
+      # Run tests (optional)
+      - name: Run tests
+        run: |
+          npm test  # Ensure you have test scripts like Jest, Mocha, etc.
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: success() # Only deploy if the build was successful
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16' # Ensure same Node.js version as build
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          npm install
+
+      # Deploy to production
+      - name: Deploy to Vercel
+        run: |
+          vercel --prod --token ${{ secrets.VERCEL_TOKEN }}  # Add Vercel token as GitHub secret
