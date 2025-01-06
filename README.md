@@ -70,7 +70,6 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
    ```bash
    git clone https://github.com/rohitrg96/recipe-sharing-backend.git
    cd recipe-sharing-backend
-````
 
 2. Install dependencies:
 
@@ -128,22 +127,22 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ## Project Structure
 
 ````
-├── src
-│   ├── config          # Application configuration (e.g., environment setup, constants)
-│   ├── controllers     # Route handlers
-│   ├── helper          # Utility functions and reusable logic
-│   ├── middleware      # Authentication and other middleware
-│   ├── models          # Mongoose models
-│   ├── routes          # API routes
-│   ├── services        # Business logic
-│   ├── validators      # Joi Validations
-│   ├── index.ts        # Entry point
-├── .env                # Environment variables
-├── tsconfig.json       # TypeScript configuration
-├── package.json        # Project metadata
-├── .prettierrc         # Prettier configuration for code formatting
-└── .github             # GitHub Actions CI/CD pipeline configuration
 
+├── src
+│ ├── config # Application configuration (e.g., environment setup, constants)
+│ ├── controllers # Route handlers
+│ ├── helper # Utility functions and reusable logic
+│ ├── middleware # Authentication and other middleware
+│ ├── models # Mongoose models
+│ ├── routes # API routes
+│ ├── services # Business logic
+│ ├── validators # Joi Validations
+│ ├── index.ts # Entry point
+├── .env # Environment variables
+├── tsconfig.json # TypeScript configuration
+├── package.json # Project metadata
+├── .prettierrc # Prettier configuration for code formatting
+└── .github # GitHub Actions CI/CD pipeline configuration
 
 ## Deployment
 
@@ -153,6 +152,8 @@ This backend can be deployed on any Node.js-compatible platform. To deploy on Ve
 
    ```bash
    npm install -g vercel
+   ```
+
 ````
 
 2. Deploy:
@@ -166,3 +167,4 @@ This backend can be deployed on any Node.js-compatible platform. To deploy on Ve
 # CI/CD Pipeline
 
 The backend is deployed automatically through a CI/CD pipeline using GitHub Actions. It is configured to build the project, and deploy to Vercel on changes to the main branch.
+````
