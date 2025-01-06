@@ -69,4 +69,4 @@ jobs:
       # Deploy to Vercel (for dev branch)
       - name: Deploy to Vercel
         run: |
-          vercel --prod --token ${{ secrets.VERCEL_TOKEN }}  # Add Vercel token as GitHub secret
+          vercel --prod --yes --token ${{ secrets.VERCEL_TOKEN }}  # Add Vercel token as GitHub secret
