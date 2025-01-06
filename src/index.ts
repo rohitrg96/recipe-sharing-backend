@@ -16,8 +16,13 @@ const port = process.env.PORT || 5080;
 
 // Middleware
 app.use(express.json());
+
+//swagger setup
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.use(cors());
+
+//security measures
 app.use(rateLimiter);
 app.use(applyCSP);
 
@@ -34,7 +39,7 @@ app.use('/api', apiRouter);
 // Global error handler
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+// app.listen(port, () => {
+//   console.log(`Server is running on port ${port}`);
+// });
 export default app;
