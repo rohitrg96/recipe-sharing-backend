@@ -161,11 +161,41 @@ export class RecipeService {
         { $limit: limitNumber }, // Pagination
       ];
 
-      // Execute the aggregation pipeline to fetch recipes
-      let recipes = await RecipeSchema.aggregate(aggregationPipeline).exec();
+      // pipeline to count total filtered recipes for pagination
+      const totalCountPipeline: PipelineStage[] = [
+        {
+          $addFields: {
+            averageStars: {
+              $cond: [
+                { $eq: [{ $size: { $ifNull: ['$stars', []] } }, 0] }, // Check if no stars
+                0,
+                {
+                  $divide: [
+                    { $sum: '$stars.rating' }, // Sum of ratings
+                    { $size: { $ifNull: ['$stars', []] } }, // Count of ratings
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        {
+          $match: {
+            ...query, // Preserve the original query filters
+            averageStars: { $gte: Number(minRating) || 0 }, // Filter by averageStars
+          },
+        },
+        { $count: 'totalCount' }, // Count the total filtered recipes
+      ];
 
-      // Count total number of recipes for pagination
-      const totalRecipes = recipes.length;
+      // Execute the aggregation pipelines
+      const [recipes, totalCountResult] = await Promise.all([
+        RecipeSchema.aggregate(aggregationPipeline).exec(),
+        RecipeSchema.aggregate(totalCountPipeline).exec(),
+      ]);
+
+      // Extract the total count from the result
+      const totalRecipes = totalCountResult.length > 0 ? totalCountResult[0].totalCount : 0;
 
       const finalData = {
         data: recipes,
