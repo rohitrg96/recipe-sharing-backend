@@ -25,7 +25,7 @@ This is the backend for the Recipe-Sharing Platform built using Node.js, TypeScr
 - User registration, login, and logout functionality.
 - Restrict actions like viewing the detail page, rating, and commenting to authenticated users.
 
-### Features
+### Additional Features
 
 - **Logging:** Logs application errors and activity for monitoring and debugging purposes using **Winston**.
 - **Swagger API Documentation:** Integrated Swagger to auto-generate API documentation for easy exploration and testing.
@@ -52,16 +52,16 @@ This is the backend for the Recipe-Sharing Platform built using Node.js, TypeScr
 - [MongoDB](https://www.mongodb.com/) instance (local or cloud)
 - A `.env` file with the following environment variables:
 
-````env
-PORT=3000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRES_IN=your_jwt_expiration_time
-UPLOADS_DIR=uploads
-CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-```
+  ```env
+  PORT=3000
+  MONGO_URI=your_mongodb_connection_string
+  JWT_SECRET=your_jwt_secret
+  JWT_EXPIRES_IN=your_jwt_expiration_time
+  UPLOADS_DIR=uploads
+  CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+  CLOUDINARY_API_KEY=your_cloudinary_api_key
+  CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+  ```
 
 ## Installation
 
@@ -70,7 +70,7 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
    ```bash
    git clone https://github.com/rohitrg96/recipe-sharing-backend.git
    cd recipe-sharing-backend
-````
+   ```
 
 2. Install dependencies:
 
@@ -111,7 +111,7 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ### Authentication
 
 - `POST /api/auth/login`: Login and get a JWT token
-- `POST /api/auth/logout`: Logout and blacklist a jwt token
+- `POST /api/auth/logout`: Logout and blacklist a JWT token
 
 ### Recipes
 
@@ -127,23 +127,23 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 
 ## Project Structure
 
-````
+```
 ├── src
-│   ├── config          # Application configuration (e.g., environment setup, constants)
-│   ├── controllers     # Route handlers
-│   ├── helper          # Utility functions and reusable logic
-│   ├── middleware      # Authentication and other middleware
-│   ├── models          # Mongoose models
-│   ├── routes          # API routes
-│   ├── services        # Business logic
-│   ├── validators      # Joi Validations
-│   ├── index.ts        # Entry point
-├── .env                # Environment variables
-├── tsconfig.json       # TypeScript configuration
-├── package.json        # Project metadata
-├── .prettierrc         # Prettier configuration for code formatting
-└── .github             # GitHub Actions CI/CD pipeline configuration
-
+│   ├── config         # Application configuration (e.g., environment setup, constants)
+│   ├── controllers    # Route handlers
+│   ├── helper         # Utility functions and reusable logic
+│   ├── middleware     # Authentication and other middleware
+│   ├── models         # Mongoose models
+│   ├── routes         # API routes
+│   ├── services       # Business logic
+│   ├── validators     # Joi validations
+│   └── index.ts       # Entry point
+├── .env               # Environment variables
+├── tsconfig.json      # TypeScript configuration
+├── package.json       # Project metadata
+├── .prettierrc        # Prettier configuration for code formatting
+└── .github            # GitHub Actions CI/CD pipeline configuration
+```
 
 ## Deployment
 
@@ -153,7 +153,7 @@ This backend can be deployed on any Node.js-compatible platform. To deploy on Ve
 
    ```bash
    npm install -g vercel
-````
+   ```
 
 2. Deploy:
 
@@ -163,6 +163,6 @@ This backend can be deployed on any Node.js-compatible platform. To deploy on Ve
 
 3. Set the environment variables in the Vercel dashboard.
 
-# CI/CD Pipeline
+## CI/CD Pipeline
 
-The backend is deployed automatically through a CI/CD pipeline using GitHub Actions. It is configured to build the project, and deploy to Vercel on changes to the main branch.
+The backend is deployed automatically through a CI/CD pipeline using GitHub Actions. It is configured to build the project and deploy to Vercel on changes to the main branch.
