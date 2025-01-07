@@ -165,7 +165,7 @@ export class RecipeService {
       let recipes = await RecipeSchema.aggregate(aggregationPipeline).exec();
 
       // Count total number of recipes for pagination
-      const totalRecipes = await RecipeSchema.countDocuments();
+      const totalRecipes = recipes.length;
 
       const finalData = {
         data: recipes,
