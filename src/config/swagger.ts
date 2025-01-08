@@ -13,6 +13,10 @@ const swaggerOptions = {
         url: 'http://localhost:5080',
         description: 'Development server',
       },
+      {
+        url: 'https://recipe-sharing-backend-theta.vercel.app',
+        description: 'Production server',
+      },
     ],
     components: {
       securitySchemes: {
