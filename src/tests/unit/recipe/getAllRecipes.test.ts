@@ -2,7 +2,6 @@ import { RecipeService } from '../../../services/recipe.service';
 import { RecipeSchema } from '../../../models/Recipe';
 import { Request, Response } from 'express';
 import { msg } from '../../../helper/messages';
-import { CustomError } from '../../../utils/customError';
 
 jest.mock('../../../models/Recipe', () => ({
   RecipeSchema: {
@@ -37,8 +36,16 @@ describe('RecipeService getAllRecipes', () => {
 
   it('should fetch all recipes with pagination', async () => {
     const mockRecipes = [
-      { title: 'Delicious Pasta', ingredients: ['Pasta', 'Tomato Sauce'], preparationTime: 30 },
-      { title: 'Tasty Pizza', ingredients: ['Cheese', 'Tomato'], preparationTime: 20 },
+      {
+        title: 'Delicious Pasta',
+        ingredients: ['Pasta', 'Tomato Sauce'],
+        preparationTime: 30,
+      },
+      {
+        title: 'Tasty Pizza',
+        ingredients: ['Cheese', 'Tomato'],
+        preparationTime: 20,
+      },
     ];
 
     // Mock database behavior
@@ -58,7 +65,10 @@ describe('RecipeService getAllRecipes', () => {
     expect(RecipeSchema.countDocuments).toHaveBeenCalled();
     expect(res.json).toHaveBeenCalledWith({
       message: msg.recipe.fetched,
-      data: { data: mockRecipes, pagination: { total: 2, page: 1, limit: 10, totalPages: 1 } },
+      data: {
+        data: mockRecipes,
+        pagination: { total: 2, page: 1, limit: 10, totalPages: 1 },
+      },
       status: 200,
       statusMessage: 'Success',
     });

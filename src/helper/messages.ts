@@ -24,6 +24,8 @@ export const msg = {
     alreadyRated: 'Recipe already rated',
     notFound: 'Recipe not found',
     imageAdded: 'Image added Successfully',
+    imageFailed: 'Image upload Failed',
     imageNotFound: 'Image Not Found',
+    userFeedback: 'User feedback on recipe',
   },
 };

@@ -8,4 +8,10 @@ export default [
   { languageOptions: { globals: globals.browser } },
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'warn', // Set 'no-explicit-any' to 'warn',
+      'no-useless-catch': 'off', // Disables the rule
+    },
+  },
 ];

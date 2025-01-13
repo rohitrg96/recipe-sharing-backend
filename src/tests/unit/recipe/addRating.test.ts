@@ -70,11 +70,13 @@ describe('RecipeService AddRating', () => {
     const { req, res, next } = createMocks(params, body);
 
     // Act
-    await recipeService.AddRating(req, res, next);
+    await recipeService.addRating(req, res, next);
 
     // Assert
     expect(RecipeSchema.findById).toHaveBeenCalledWith('recipeId');
-    expect(next).toHaveBeenCalledWith(new CustomError(msg.recipe.notFound, 400));
+    expect(next).toHaveBeenCalledWith(
+      new CustomError(msg.recipe.notFound, 400),
+    );
     expect(res.json).not.toHaveBeenCalled();
   });
 });

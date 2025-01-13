@@ -27,37 +27,35 @@ export class AuthService {
    * @throws - If the user is not found or the password is incorrect.
    */
   login = async (userName: string, password: string) => {
-    try {
-      // Check if the user exists in the database
-      const dbUser = await this.userRepository.findUserByEmail(userName);
+    // Check if the user exists in the database
+    const dbUser = await this.userRepository.findUserByEmail(userName);
 
-      if (dbUser) {
-        // Validate the password by comparing it with the stored hashed password
-        const isValidPass = bcrypt.compareSync(password, dbUser.password);
-        if (isValidPass) {
-          // If password is correct, generate JWT token for the user
-          const token = jwt.sign(
-            {
-              email: dbUser.email,
-              id: dbUser._id,
-            },
-            jwtConfig.secret, // Secret key for signing the token
-            { expiresIn: jwtConfig.expiresIn }, // Token expiration time
-          );
+    if (dbUser) {
+      // Validate the password by comparing it with the stored hashed password
+      const isValidPass = bcrypt.compareSync(password, dbUser.password);
+      if (isValidPass) {
+        // If password is correct, generate JWT token for the user
+        const token = jwt.sign(
+          {
+            email: dbUser.email,
+            id: dbUser._id,
+          },
+          jwtConfig.secret, // Secret key for signing the token
+          { expiresIn: jwtConfig.expiresIn }, // Token expiration time
+        );
 
-          // Send back a successful response with the generated token
-          return { token };
-        } else {
-          // If password is incorrect, throw a CustomError with BAD_REQUEST status
-          throw new CustomError(msg.user.invalidCredentials, HTTP_STATUS.BAD_REQUEST);
-        }
+        // Send back a successful response with the generated token
+        return { token };
       } else {
-        // If user is not found, throw a CustomError with BAD_REQUEST status
-        throw new CustomError(msg.user.notFound, HTTP_STATUS.BAD_REQUEST);
+        // If password is incorrect, throw a CustomError with BAD_REQUEST status
+        throw new CustomError(
+          msg.user.invalidCredentials,
+          HTTP_STATUS.BAD_REQUEST,
+        );
       }
-    } catch (error: unknown) {
-      // Error handling block for any unexpected issues
-      throw error;
+    } else {
+      // If user is not found, throw a CustomError with BAD_REQUEST status
+      throw new CustomError(msg.user.notFound, HTTP_STATUS.BAD_REQUEST);
     }
   };
 
@@ -69,22 +67,18 @@ export class AuthService {
    * @throws - If the token is not found or the token is invalid.
    */
   logout = async (token: string) => {
-    try {
-      if (!token) {
-        throw new CustomError(msg.user.tokenNotFound, 400);
-      }
-      const decoded = jwt.decode(token) as JwtPayload;
-      // Check if the token has an expiration field
-      if (!decoded || !decoded.exp) {
-        throw new Error('Invalid token: Missing expiration time.');
-      }
-      const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
-      const ttl = decoded.exp - currentTime; // Remaining time
-
-      blacklistToken(token, ttl);
-      return { token };
-    } catch (error) {
-      throw error;
+    if (!token) {
+      throw new CustomError(msg.user.tokenNotFound, 400);
     }
+    const decoded = jwt.decode(token) as JwtPayload;
+    // Check if the token has an expiration field
+    if (!decoded || !decoded.exp) {
+      throw new Error('Invalid token: Missing expiration time.');
+    }
+    const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+    const ttl = decoded.exp - currentTime; // Remaining time
+
+    blacklistToken(token, ttl);
+    return { token };
   };
 }

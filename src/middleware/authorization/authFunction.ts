@@ -15,7 +15,11 @@ import { msg } from '../../helper/messages';
  * @param {Response} res - Express response object.
  * @param {NextFunction} next - Express next middleware function to pass control.
  */
-export const validateToken = (req: any, res: Response, next: NextFunction) => {
+export const validateToken = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   // Check if the authorization header exists in the request
   if (!req.headers.authorization) {
     // If no token is found, return forbidden response
@@ -34,10 +38,15 @@ export const validateToken = (req: any, res: Response, next: NextFunction) => {
   }
 
   // Verify the token using the secret key and callback function
-  jwt.verify(token, jwtConfig.secret, (err: any, decoded: any) => {
+  jwt.verify(token, jwtConfig.secret, (err: unknown, decoded: unknown) => {
     if (err) {
       // If token verification fails, return unauthorized response
-      responseStatus(res, HTTP_STATUS.UNAUTHORIZED, msg.user.invalidToken, null);
+      responseStatus(
+        res,
+        HTTP_STATUS.UNAUTHORIZED,
+        msg.user.invalidToken,
+        null,
+      );
       return;
     } else {
       // If token is valid, decode and attach user data to the request object

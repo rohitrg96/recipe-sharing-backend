@@ -1,8 +1,8 @@
-// repositories/recipeRepository.ts
 import { IRecipe, RecipeSchema } from '../models/Recipe';
 import { UserSchema } from '../models/User';
 import { SearchFilters } from '../types/recipe.type';
 import { PipelineStage, FilterQuery } from 'mongoose';
+import mongoose from 'mongoose';
 
 export class RecipeRepository {
   // Find a recipe by its ID and check if the user owns it
@@ -171,5 +171,60 @@ export class RecipeRepository {
   // Method to execute aggregation query
   aggregateRecipes = async (aggregationPipeline: PipelineStage[]) => {
     return await RecipeSchema.aggregate(aggregationPipeline).exec();
+  };
+
+  findRecipeById = async (recipeId: string): Promise<IRecipe | null> => {
+    return RecipeSchema.findOne({ _id: recipeId })
+      .populate('user', 'firstName lastName email')
+      .populate('stars.user', 'firstName lastName email')
+      .populate('comments.user', 'firstName lastName email');
+  };
+
+  /**
+   * Add a new rating to the recipe.
+   *
+   * @param recipe - The recipe document.
+   * @param userId - The ID of the user adding the rating.
+   * @param rating - The rating provided by the user.
+   */
+  addNewRating = (recipe: IRecipe, userId: string, rating: number): void => {
+    const objectId = new mongoose.Types.ObjectId(userId); // Convert string to ObjectId
+    recipe.stars?.push({ user: objectId, rating });
+  };
+
+  /**
+   * Save the updated recipe document.
+   *
+   * @param recipe - The recipe document to save.
+   * @returns  - A promise that resolves to the updated recipe.
+   */
+  saveRecipe = async (recipe: IRecipe) => {
+    return recipe.save();
+  };
+
+  /**
+   * Add a new comment to the recipe.
+   *
+   * @param {IRecipe} recipe - The recipe to add the comment to.
+   * @param {string} userId - The ID of the user adding the comment.
+   * @param {string} userComment - The comment content.
+   */
+  addNewComment(recipe: IRecipe, userId: string, userComment: string): void {
+    const objectId = new mongoose.Types.ObjectId(userId);
+    recipe.comments?.push({ user: objectId, comment: userComment });
+  }
+
+  findRecipeDetails = async (recipeId: string) => {
+    return RecipeSchema.findOne({ _id: recipeId });
+  };
+
+  deleteRecipeByIdAndUser = async (
+    recipeId: string,
+    userId: mongoose.Types.ObjectId,
+  ) => {
+    return RecipeSchema.findOneAndDelete({
+      _id: recipeId,
+      user: userId,
+    }).populate('user', 'firstName lastName email');
   };
 }
