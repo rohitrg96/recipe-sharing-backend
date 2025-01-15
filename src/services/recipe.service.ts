@@ -7,6 +7,7 @@ import { SearchFilters } from '../types/recipe.type';
 import mongoose from 'mongoose';
 import configureCloudinary from '../config/multer';
 import { v2 as cloudinary } from 'cloudinary';
+import logger from '../config/logger';
 
 export class RecipeService {
   private recipeRepository: RecipeRepository;
@@ -217,7 +218,6 @@ export class RecipeService {
         }
       }
     } catch (error: unknown) {
-      console.error(error);
       // Forward the error to the global error handler
       throw error;
     }
@@ -411,8 +411,6 @@ export class RecipeService {
       // Return the deleted recipe document
       return deletedRecipe;
     } catch (error: unknown) {
-      console.error('Error in deleteRecipe:', error);
-
       // Re-throw the error to propagate it to the global error handler
       throw error;
     }

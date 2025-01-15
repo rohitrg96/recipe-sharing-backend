@@ -1,6 +1,7 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import connectDB from './config/db';
 import apiRouter from './routes/api.routes';
 import { errorHandler } from './middleware/errorHandler/errorHandler';
@@ -8,8 +9,7 @@ import rateLimiter from './middleware/security/rateLimiter';
 import { applyCSP } from './middleware/security/csp';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger';
-
-dotenv.config();
+import logger from './config/logger';
 
 const app = express();
 const port = process.env.PORT || 5080;
@@ -55,6 +55,6 @@ app.use('/api', apiRouter);
 app.use(errorHandler);
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  logger.info(`Server is running on port ${port}`);
 });
 export default app;

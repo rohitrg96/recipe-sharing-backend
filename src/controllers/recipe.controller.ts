@@ -6,6 +6,7 @@ import { msg } from '../helper/messages';
 import { IRecipe } from '../models/Recipe';
 import { SearchFilters } from '../types/recipe.type';
 import mongoose from 'mongoose';
+import { getCache, setCache, deleteCache } from '../services/cache.service';
 
 const recipeService = new RecipeService();
 
@@ -35,6 +36,7 @@ export const updateRecipe = async (
     const userId = req.user?.id;
 
     const result = await recipeService.updateRecipe(recipeId, recipe, userId);
+    await deleteCache(`recipe:${recipeId}`);
     return responseStatus(res, HTTP_STATUS.OK, msg.recipe.updated, result);
   } catch (error: unknown) {
     next(error);
@@ -55,6 +57,17 @@ export const getAllRecipes = async (
       page,
       limit,
     }: SearchFilters = req.query;
+    const cacheKey = `recipes:All`;
+    const cachedData = await getCache(cacheKey);
+
+    if (cachedData) {
+      return responseStatus(
+        res,
+        HTTP_STATUS.OK,
+        msg.recipe.fetched,
+        JSON.parse(cachedData),
+      );
+    }
 
     const result = await recipeService.getAllRecipes({
       ingredients,
@@ -64,6 +77,7 @@ export const getAllRecipes = async (
       page,
       limit,
     });
+    await setCache(cacheKey, JSON.stringify(result), 180);
     return responseStatus(res, HTTP_STATUS.OK, msg.recipe.fetched, result);
   } catch (error: unknown) {
     next(error);
@@ -77,8 +91,22 @@ export const getRecipe = async (
 ) => {
   try {
     const recipeId = req.params.recipeId;
-    const recipe = await recipeService.getRecipe(recipeId);
-    return responseStatus(res, HTTP_STATUS.OK, msg.recipe.fetched, recipe);
+    const cacheKey = `recipe:${recipeId}`;
+
+    // Check the cache
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      return responseStatus(
+        res,
+        HTTP_STATUS.OK,
+        msg.recipe.fetched,
+        JSON.parse(cachedData),
+      );
+    }
+
+    const result = await recipeService.getRecipe(recipeId);
+    await setCache(cacheKey, JSON.stringify(result), 180);
+    return responseStatus(res, HTTP_STATUS.OK, msg.recipe.fetched, result);
   } catch (error: unknown) {
     next(error);
   }
@@ -92,13 +120,9 @@ export const deleteRecipe = async (
   try {
     const recipeId = req.params.recipeId;
     const userId: mongoose.Types.ObjectId = req.user?.id;
-    const deleteRecipe = await recipeService.deleteRecipe(recipeId, userId);
-    return responseStatus(
-      res,
-      HTTP_STATUS.OK,
-      msg.recipe.deleted,
-      deleteRecipe,
-    );
+    const result = await recipeService.deleteRecipe(recipeId, userId);
+    await deleteCache(`recipe:${recipeId}`);
+    return responseStatus(res, HTTP_STATUS.OK, msg.recipe.deleted, result);
   } catch (error: unknown) {
     next(error);
   }
@@ -113,9 +137,10 @@ export const addRating = async (
     const recipeId = req.params.recipeId;
     const userId: string = req.user.id;
     const userRating: number = req.body.rating;
-    const rating = await recipeService.addRating(recipeId, userId, userRating);
-    if (rating) {
-      return responseStatus(res, HTTP_STATUS.OK, msg.recipe.updated, rating);
+    const result = await recipeService.addRating(recipeId, userId, userRating);
+    await deleteCache(`recipe:${recipeId}`);
+    if (result) {
+      return responseStatus(res, HTTP_STATUS.OK, msg.recipe.updated, result);
     } else {
       return responseStatus(
         res,
@@ -138,12 +163,13 @@ export const addComment = async (
     const recipeId = req.params.recipeId;
     const userId: string = req.user?.id;
     const userComment: string = req.body.comment;
-    const comment = await recipeService.addComment(
+    const result = await recipeService.addComment(
       recipeId,
       userId,
       userComment,
     );
-    return responseStatus(res, HTTP_STATUS.OK, msg.recipe.updated, comment);
+    await deleteCache(`recipe:${recipeId}`);
+    return responseStatus(res, HTTP_STATUS.OK, msg.recipe.updated, result);
   } catch (error: unknown) {
     next(error);
   }
@@ -158,11 +184,11 @@ export const checkUserCommentAndRating = async (
     const recipeId = req.params.recipeId;
     const userId: mongoose.Types.ObjectId = req.user?.id;
 
-    const data = await recipeService.checkUserCommentAndRating(
+    const result = await recipeService.checkUserCommentAndRating(
       recipeId,
       userId,
     );
-    return responseStatus(res, HTTP_STATUS.OK, msg.recipe.userFeedback, data);
+    return responseStatus(res, HTTP_STATUS.OK, msg.recipe.userFeedback, result);
   } catch (error: unknown) {
     next(error);
   }
@@ -175,9 +201,8 @@ export const addImage = async (
 ) => {
   try {
     const file = req.file;
-    const image = await recipeService.uploadImage(file);
-
-    return responseStatus(res, HTTP_STATUS.OK, msg.recipe.imageAdded, image);
+    const result = await recipeService.uploadImage(file);
+    return responseStatus(res, HTTP_STATUS.OK, msg.recipe.imageAdded, result);
   } catch (error: unknown) {
     next(error);
   }
