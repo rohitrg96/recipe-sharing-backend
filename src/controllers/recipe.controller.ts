@@ -19,6 +19,7 @@ export const addRecipe = async (
     const recipe: IRecipe = req.body;
     const userId = req.user?.id;
     const result = await recipeService.addRecipe(recipe, userId);
+    await deleteCache(`recipes:All`);
     return responseStatus(res, HTTP_STATUS.OK, msg.recipe.added, result);
   } catch (error: unknown) {
     next(error);
@@ -57,7 +58,10 @@ export const getAllRecipes = async (
       page,
       limit,
     }: SearchFilters = req.query;
-    const cacheKey = `recipes:All`;
+    const cacheKey = `recipes:${ingredients || 'all'}:${title || 'all'}:${
+      minRating || 'any'
+    }:${maxPreparationTime || 'any'}:${page || 1}:${limit || 10}`;
+
     const cachedData = await getCache(cacheKey);
 
     if (cachedData) {
