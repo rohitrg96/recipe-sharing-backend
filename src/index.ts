@@ -17,8 +17,23 @@ const port = process.env.PORT || 5080;
 // Middleware
 app.use(express.json());
 
-//swagger setup
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Serve Swagger JSON for compatibility in deployed environments
+app.get('/swagger.json', (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec); // Serve the Swagger specification
+});
+
+// Setup Swagger UI
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    // Pass the swaggerSpec here, not null
+    swaggerOptions: {
+      url: '/swagger.json', // Point Swagger UI to the JSON file
+    },
+  }),
+);
 
 app.use(cors());
 
@@ -39,7 +54,7 @@ app.use('/api', apiRouter);
 // Global error handler
 app.use(errorHandler);
 
-// app.listen(port, () => {
-//   console.log(`Server is running on port ${port}`);
-// });
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
 export default app;

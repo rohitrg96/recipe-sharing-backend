@@ -1,45 +1,23 @@
 import { UserService } from '../services/user.service';
 import { Request, Response, NextFunction } from 'express';
 import { responseStatus } from '../helper/response';
+import { IUser } from '../models/User';
+import { HTTP_STATUS } from '../utils/statusCodes';
+import { msg } from '../helper/messages';
 
-let userService = new UserService();
+const userService = new UserService();
 
-export const AddUser = (req: Request, res: Response, next: NextFunction) => {
+export const addUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    return userService.addUser(req, res, next);
-  } catch (error: any) {
-    return responseStatus(res, 500, error.message, error);
-  }
-};
-
-export const UpdateUser = (req: Request, res: Response, next: NextFunction) => {
-  try {
-    return userService.updateUser(req, res, next);
-  } catch (error: any) {
-    return responseStatus(res, 500, error.message, error);
-  }
-};
-
-export const GetAllUsers = (req: Request, res: Response, next: NextFunction) => {
-  try {
-    return userService.getAllUsers(req, res, next);
-  } catch (error: any) {
-    return responseStatus(res, 500, error.message, error);
-  }
-};
-
-export const GetUser = (req: Request, res: Response, next: NextFunction) => {
-  try {
-    return userService.getUser(req, res, next);
-  } catch (error: any) {
-    return responseStatus(res, 500, error.message, error);
-  }
-};
-
-export const DeleteUser = (req: Request, res: Response, next: NextFunction) => {
-  try {
-    return userService.deleteUser(req, res, next);
-  } catch (error: any) {
-    return responseStatus(res, 500, error.message, error);
+    // Extract user data from the request body
+    const user: IUser = req.body;
+    const result = await userService.addUser(user);
+    return responseStatus(res, HTTP_STATUS.OK, msg.user.added, result);
+  } catch (error: unknown) {
+    next(error);
   }
 };

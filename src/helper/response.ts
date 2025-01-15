@@ -1,4 +1,11 @@
-export const responseStatus = (res: any, status: any, message: any, data: any) => {
+import { Response } from 'express';
+
+export const responseStatus = (
+  res: Response,
+  status: number,
+  message: string,
+  data: unknown,
+) => {
   if (status === 200) {
     res.status(status).json({
       statusMessage: 'Success',
