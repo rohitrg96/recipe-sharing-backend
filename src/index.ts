@@ -54,7 +54,7 @@ app.use('/api', apiRouter);
 // Global error handler
 app.use(errorHandler);
 
-app.listen(port, () => {
-  logger.info(`Server is running on port ${port}`);
-});
+// app.listen(port, () => {
+//   logger.info(`Server is running on port ${port}`);
+// });
 export default app;

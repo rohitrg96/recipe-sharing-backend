@@ -7,7 +7,6 @@ import { SearchFilters } from '../types/recipe.type';
 import mongoose from 'mongoose';
 import configureCloudinary from '../config/multer';
 import { v2 as cloudinary } from 'cloudinary';
-import logger from '../config/logger';
 
 export class RecipeService {
   private recipeRepository: RecipeRepository;
