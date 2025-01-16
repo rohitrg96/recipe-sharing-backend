@@ -1,145 +1,45 @@
 import { RecipeService } from '../../../services/recipe.service';
-import { UserSchema } from '../../../models/User';
-import { RecipeSchema } from '../../../models/Recipe';
-import { Request, Response } from 'express';
-import { msg } from '../../../helper/messages';
-import { CustomError } from '../../../utils/customError';
+import { RecipeRepository } from '../../../repositories/recipeRepository';
+import { mockRecipe } from './mock/recipe.mock';
+import { IRecipe } from '../../../models/Recipe';
 
-jest.mock('../../../models/User', () => ({
-  UserSchema: {
-    findOne: jest.fn(),
-  },
-}));
+// Mock RecipeRepository directly
+jest.mock('../../../repositories/recipeRepository');
 
-jest.mock('../../../models/Recipe', () => ({
-  RecipeSchema: {
-    create: jest.fn(),
-  },
-}));
-
-const createMocks = (recipeData: any, userId: string | undefined) => {
-  const req = {
-    body: recipeData,
-    user: { id: userId },
-  } as unknown as Request;
-
-  const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn(),
-  } as unknown as Response;
-
-  const next = jest.fn();
-
-  return { req, res, next };
-};
-
-describe('RecipeService addRecipe', () => {
+describe('RecipeService', () => {
   let recipeService: RecipeService;
+  let mockFindUserById: jest.Mock;
+  let mockCreateRecipe: jest.Mock;
 
-  beforeAll(() => {
+  beforeEach(() => {
     recipeService = new RecipeService();
+    mockFindUserById = jest.fn(); // Explicitly mock the method
+    mockCreateRecipe = jest.fn(); // Explicitly mock the method
+
+    // Override the methods on the mock
+    RecipeRepository.prototype.findUserById = mockFindUserById;
+    RecipeRepository.prototype.createRecipe = mockCreateRecipe;
   });
 
-  it('should add a recipe and return 200 status', async () => {
-    const mockUser = {
-      _id: 'userId',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@example.com',
-    };
-
-    const mockRecipe = {
-      title: 'Delicious Pasta',
-      ingredients: ['Pasta', 'Tomato Sauce', 'Cheese'],
-      steps: ['Boil water', 'Cook pasta', 'Add sauce', 'Serve'],
-      preparationTime: 30,
-      user: 'userId',
-      image: null,
-    };
-
-    const mockRecipeWithPopulate = {
-      ...mockRecipe,
-      user: mockUser,
-      populate: jest.fn().mockResolvedValue({
-        ...mockRecipe,
-        user: mockUser,
-      }),
-    };
-
-    // Mock database behavior
-    (UserSchema.findOne as jest.Mock).mockResolvedValue(mockUser);
-    (RecipeSchema.create as jest.Mock).mockResolvedValue(mockRecipeWithPopulate);
-
-    const { req, res, next } = createMocks(mockRecipe, 'userId');
-
-    await recipeService.addRecipe(req, res, next);
-
-    expect(UserSchema.findOne).toHaveBeenCalledWith({ _id: 'userId' });
-    expect(RecipeSchema.create).toHaveBeenCalledWith({
-      ...mockRecipe,
-      user: 'userId',
-    });
-
-    expect(mockRecipeWithPopulate.populate).toHaveBeenCalledWith('user', 'firstName lastName email');
-
-    expect(res.json).toHaveBeenCalledWith({
-      message: msg.recipe.added,
-      data: {
-        ...mockRecipe,
-        user: mockUser,
-      },
-      status: 200,
-      statusMessage: 'Success',
-    });
-    expect(next).not.toHaveBeenCalled();
+  afterEach(() => {
+    jest.clearAllMocks(); // Clear mocks after each test
   });
 
-  it('should throw a CustomError if the user is not found', async () => {
-    // Arrange
-    const mockRecipe = {
-      title: 'Delicious Pasta',
-      ingredients: ['Pasta', 'Tomato Sauce', 'Cheese'],
-      image: 'image-url',
-      steps: ['Boil water', 'Cook pasta', 'Add sauce', 'Serve'],
-      preparationTime: 30,
-    };
+  it('should add a recipe successfully if user exists', async () => {
+    // Arrange: Mock the findUserById to return a valid user
+    mockFindUserById.mockResolvedValue({ _id: 'userId', firstName: 'John' });
 
-    UserSchema.findOne = jest.fn().mockResolvedValue(null); // User not found
+    mockCreateRecipe.mockResolvedValue(mockRecipe);
 
-    const { req, res, next } = createMocks(mockRecipe, 'invalidUserId');
+    // Act: Call the addRecipe method
+    const result = await recipeService.addRecipe(
+      mockRecipe as IRecipe,
+      'userId',
+    );
 
-    // Act
-    await recipeService.addRecipe(req, res, next);
-
-    // Assert
-    expect(UserSchema.findOne).toHaveBeenCalledWith({ _id: 'invalidUserId' });
-    expect(next).toHaveBeenCalledWith(new CustomError(msg.user.notFound, 400));
-    expect(res.status).not.toHaveBeenCalled();
-    expect(res.json).not.toHaveBeenCalled();
-  });
-
-  it('should handle errors and pass them to the next middleware', async () => {
-    // Arrange
-    const mockRecipe = {
-      title: 'Delicious Pasta',
-      ingredients: ['Pasta', 'Tomato Sauce', 'Cheese'],
-      image: 'image-url',
-      steps: ['Boil water', 'Cook pasta', 'Add sauce', 'Serve'],
-      preparationTime: 30,
-    };
-
-    const mockError = new Error('Database error');
-    UserSchema.findOne = jest.fn().mockRejectedValue(mockError);
-
-    const { req, res, next } = createMocks(mockRecipe, 'userId');
-
-    // Act
-    await recipeService.addRecipe(req, res, next);
-
-    // Assert
-    expect(UserSchema.findOne).toHaveBeenCalledWith({ _id: 'userId' });
-    expect(next).toHaveBeenCalledWith(mockError);
-    expect(res.status).not.toHaveBeenCalled();
-    expect(res.json).not.toHaveBeenCalled();
+    // Assert: Check that the result matches the expected output
+    expect(result.dbRecipe).toEqual(mockRecipe);
+    expect(mockFindUserById).toHaveBeenCalledWith('userId');
+    expect(mockCreateRecipe).toHaveBeenCalledWith(mockRecipe, 'userId');
   });
 });

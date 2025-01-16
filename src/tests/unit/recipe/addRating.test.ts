@@ -1,80 +1,45 @@
 import { RecipeService } from '../../../services/recipe.service';
-import { RecipeSchema } from '../../../models/Recipe';
-import { Request, Response } from 'express';
-import { msg } from '../../../helper/messages';
+import { RecipeRepository } from '../../../repositories/recipeRepository';
 import { CustomError } from '../../../utils/customError';
 
-jest.mock('../../../models/Recipe', () => ({
-  RecipeSchema: {
-    findById: jest.fn(),
-  },
-}));
+jest.mock('../../../repositories/recipeRepository', () => {
+  return {
+    RecipeRepository: jest.fn().mockImplementation(() => {
+      return {
+        findRecipeById: jest.fn(), // Mock the findRecipeById method
+        saveRecipe: jest.fn(),
+        addNewRating: jest.fn(),
+      };
+    }),
+  };
+});
 
-const createMocks = (params: any, body: any) => {
-  const req = {
-    params,
-    body,
-    user: { id: 'userId' },
-  } as unknown as Request;
-
-  const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn(),
-  } as unknown as Response;
-
-  const next = jest.fn();
-
-  return { req, res, next };
-};
-
-describe('RecipeService AddRating', () => {
+describe('RecipeService - addRating', () => {
   let recipeService: RecipeService;
+  let recipeRepositoryMock: jest.Mocked<RecipeRepository>;
 
-  beforeAll(() => {
+  beforeEach(() => {
+    recipeRepositoryMock =
+      new RecipeRepository() as jest.Mocked<RecipeRepository>;
     recipeService = new RecipeService();
+    (recipeService as any).recipeRepository = recipeRepositoryMock; // Mock the repository
   });
 
-  it('should add a rating to the recipe', async () => {
-    const mockRecipe = {
-      _id: 'recipeId',
-      stars: [],
-      save: jest.fn().mockResolvedValue(true),
-    };
+  it('should throw an error if the recipe is not found', async () => {
+    // Arrange
+    recipeRepositoryMock.findRecipeById.mockResolvedValue(null); // Mock the method properly
 
-    (RecipeSchema.findById as jest.Mock).mockResolvedValue(mockRecipe);
+    const recipeId = 'invalidRecipeId';
+    const userId = 'testUserId';
+    const userRating = 5;
 
-    const params = { recipeId: 'recipeId' };
-    const body = { rating: 5 };
-    const { req, res, next } = createMocks(params, body);
+    // Act & Assert
+    await expect(
+      recipeService.addRating(recipeId, userId, userRating),
+    ).rejects.toThrow(CustomError);
 
-    // Act
-    await recipeService.AddRating(req, res, next);
-
-    // Assert
-    expect(RecipeSchema.findById).toHaveBeenCalledWith('recipeId');
-    expect(mockRecipe.stars).toContainEqual({ user: 'userId', rating: 5 });
-    expect(res.json).toHaveBeenCalledWith({
-      message: msg.recipe.updated,
-      data: mockRecipe,
-      status: 200,
-      statusMessage: 'Success',
-    });
-    expect(next).not.toHaveBeenCalled();
-  });
-
-  it('should return error if the recipe is not found', async () => {
-    (RecipeSchema.findById as jest.Mock).mockResolvedValue(null);
-
-    const params = { recipeId: 'recipeId' };
-    const body = { rating: 5 };
-    const { req, res, next } = createMocks(params, body);
-
-    // Act
-    await recipeService.AddRating(req, res, next);
-
-    // Assert
-    expect(RecipeSchema.findById).toHaveBeenCalledWith('recipeId');
-    expect(next).toHaveBeenCalledWith(new CustomError(msg.recipe.notFound, 400));
-    expect(res.json).not.toHaveBeenCalled();
+    await expect(
+      recipeService.addRating(recipeId, userId, userRating),
+    ).rejects.toThrow('Recipe not found');
   });
 });

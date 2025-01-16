@@ -1,8 +1,7 @@
 import * as cloudinary from 'cloudinary';
 import { RecipeService } from '../../../services/recipe.service';
-import { Request, Response } from 'express';
-import { msg } from '../../../helper/messages';
 import { CustomError } from '../../../utils/customError';
+import { msg } from '../../../helper/messages';
 
 jest.mock('cloudinary', () => ({
   v2: {
@@ -11,7 +10,7 @@ jest.mock('cloudinary', () => ({
       upload_stream: jest.fn().mockImplementation((options, callback) => {
         // Simulate a stream-like object with an `end` method
         const stream = {
-          end: (buffer: Buffer) => {
+          end: () => {
             callback(null, { secure_url: 'https://cloudinary.com/image.jpg' });
           },
         };
@@ -20,21 +19,6 @@ jest.mock('cloudinary', () => ({
     },
   },
 }));
-
-const createMocks = (file: any) => {
-  const req = {
-    file,
-  } as unknown as Request;
-
-  const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn(),
-  } as unknown as Response;
-
-  const next = jest.fn();
-
-  return { req, res, next };
-};
 
 describe('RecipeService uploadImage', () => {
   let recipeService: RecipeService;
@@ -46,58 +30,59 @@ describe('RecipeService uploadImage', () => {
   it('should upload image successfully and return the image URL', async () => {
     const mockFile = {
       buffer: Buffer.from('image data'),
-    };
-
-    const { req, res, next } = createMocks(mockFile);
+    } as Express.Multer.File;
 
     // Act
-    await recipeService.uploadImage(req, res, next);
+    const result = await recipeService.uploadImage(mockFile);
 
     // Assert
     expect(cloudinary.v2.config).toHaveBeenCalled();
     expect(cloudinary.v2.uploader.upload_stream).toHaveBeenCalled();
-
-    // Ensure the response is correct
-    expect(res.json).toHaveBeenCalledWith({
-      message: msg.recipe.imageAdded,
-      data: { url: 'https://cloudinary.com/image.jpg' },
-      status: 200,
-      statusMessage: 'Success',
-    });
-
-    // Ensure that `next` was NOT called in a successful upload
-    expect(next).not.toHaveBeenCalled();
+    expect(result).toEqual({ url: 'https://cloudinary.com/image.jpg' });
   });
 
   it('should throw an error if no file is uploaded', async () => {
-    const { req, res, next } = createMocks(null);
+    const mockFile = undefined; // Simulate no file
 
-    // Act
-    await recipeService.uploadImage(req, res, next);
-
-    // Assert
-    expect(next).toHaveBeenCalledWith(new CustomError(msg.recipe.imageNotFound, 400));
-    expect(res.json).not.toHaveBeenCalled();
+    // Act & Assert
+    await expect(recipeService.uploadImage(mockFile)).rejects.toThrowError(
+      new CustomError(msg.recipe.imageNotFound, 400),
+    );
   });
 
   it('should handle Cloudinary upload failure', async () => {
     // Simulate failure for upload_stream mock
-    (cloudinary.v2.uploader.upload_stream as jest.Mock).mockImplementationOnce((options, callback) => {
-      callback(new Error('Cloudinary upload failed'), null);
-    });
+    (cloudinary.v2.uploader.upload_stream as jest.Mock).mockImplementationOnce(
+      (options, callback) => {
+        callback(new Error('Cloudinary upload failed'), null);
+      },
+    );
 
     const mockFile = {
       buffer: Buffer.from('image data'),
-    };
+    } as Express.Multer.File;
 
-    const { req, res, next } = createMocks(mockFile);
+    // Act & Assert
+    await expect(recipeService.uploadImage(mockFile)).rejects.toThrowError(
+      new CustomError('Cloudinary upload failed', 500),
+    );
+  });
 
-    // Act
-    await recipeService.uploadImage(req, res, next);
+  it('should throw an error if Cloudinary secure_url is missing', async () => {
+    // Simulate secure_url missing in the response
+    (cloudinary.v2.uploader.upload_stream as jest.Mock).mockImplementationOnce(
+      (options, callback) => {
+        callback(null, { secure_url: undefined });
+      },
+    );
 
-    // Assert
-    expect(cloudinary.v2.uploader.upload_stream).toHaveBeenCalled();
-    expect(next).toHaveBeenCalledWith(new CustomError(msg.recipe.imageNotFound, 400));
-    expect(res.json).not.toHaveBeenCalled();
+    const mockFile = {
+      buffer: Buffer.from('image data'),
+    } as Express.Multer.File;
+
+    // Act & Assert
+    await expect(recipeService.uploadImage(mockFile)).rejects.toThrowError(
+      new CustomError('Secure URL missing', 404),
+    );
   });
 });

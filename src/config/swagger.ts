@@ -11,11 +11,15 @@ const swaggerOptions = {
     servers: [
       {
         url: 'http://localhost:5080',
-        description: 'Development server',
+        description: 'local server',
+      },
+      {
+        url: 'https://recipe-sharing-backend-9u2dllrem.vercel.app/',
+        description: 'Dev server',
       },
       {
         url: 'https://recipe-sharing-backend-theta.vercel.app',
-        description: 'Production server',
+        description: 'Prod server',
       },
     ],
     components: {

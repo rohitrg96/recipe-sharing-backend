@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest --watch",
     "dev": "nodemon",
     "build": "tsc",
     "vercel-build": "npm run build",
+    "lint": "eslint .",
     "start": "node dist/serverless.js"
   },
   "author": "",
@@ -31,6 +32,7 @@
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
     "node-cache": "^5.1.2",
+    "redis": "^4.7.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "ts-node": "^10.9.2",
@@ -38,6 +40,7 @@
     "winston": "^3.17.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.17.0",
     "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
@@ -47,13 +50,19 @@
     "@types/joi": "^17.2.2",
     "@types/mongoose": "^5.11.96",
     "@types/multer": "^1.4.12",
+    "@types/redis": "^4.0.10",
     "@types/supertest": "^6.0.2",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.7",
     "@types/winston": "^2.4.4",
+    "@typescript-eslint/eslint-plugin": "^8.19.1",
+    "@typescript-eslint/parser": "^8.19.1",
+    "eslint": "^9.17.0",
+    "globals": "^15.14.0",
     "jest": "^29.7.0",
     "nodemon": "^3.1.7",
     "supertest": "^7.0.0",
-    "ts-jest": "^29.2.5"
+    "ts-jest": "^29.2.5",
+    "typescript-eslint": "^8.19.1"
   }
 }
