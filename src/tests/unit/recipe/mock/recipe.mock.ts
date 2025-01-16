@@ -23,3 +23,9 @@ export const filtersWithNoResults = {
   page: '1',
   limit: '10',
 };
+
+export const mockRecipe = {
+  title: 'Pasta',
+  ingredients: ['flour', 'water'],
+  steps: ['mix', 'boil'],
+};

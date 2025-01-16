@@ -1,132 +1,103 @@
+// import mongoose from 'mongoose';
 import { AuthService } from '../../../services/auth.service';
-import { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-// import { blacklistToken } from '../../../middleware/authorization/authFunction';
-// import { responseStatus } from '../../../helper/response';
-// import { CustomError } from '../../../utils/customError';
-// import { msg } from '../../../helper/messages';
+import { CustomError } from '../../../utils/customError';
+import { msg } from '../../../helper/messages';
+import { UserRepository } from '../../../repositories/userRepository';
+import {
+  validMockUser,
+  invalidMockUser,
+  nonExistentUser,
+  loginData,
+  mockToken,
+} from './mock/auth.mock';
 
-const createMocks = (logoutData: { authorization: string }) => {
-  const req = {
-    headers: { authorization: logoutData.authorization },
-  } as Request; // Cast to Request type
+jest.mock('../../../repositories/userRepository');
+jest.mock('bcrypt');
+jest.mock('jsonwebtoken');
 
-  const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn(),
-  } as unknown as Response;
-
-  const next = jest.fn();
-
-  return { req, res, next };
-};
-
-describe('AuthService logout', () => {
+describe('AuthService login', () => {
   let authService: AuthService;
+  let userRepositoryMock: jest.Mocked<UserRepository>;
 
   beforeAll(() => {
     authService = new AuthService();
+    userRepositoryMock = authService[
+      'userRepository'
+    ] as jest.Mocked<UserRepository>;
   });
 
-  it('should return 200 and blacklist the token for a valid token', async () => {
+  it('should return a token for valid credentials', async () => {
     // Arrange
-    const token = 'mock-jwt-token';
-    const decodedToken = { exp: Math.floor(Date.now() / 1000) + 3600 }; // 1 hour expiration
-
-    // Mock JWT decoding and blacklistToken function
-    jwt.decode = jest.fn().mockReturnValue(decodedToken);
-
-    const logoutData = {
-      authorization: `Bearer ${token}`,
-    };
-
-    const { req, res, next } = createMocks(logoutData);
+    userRepositoryMock.findUserByEmail = jest
+      .fn()
+      .mockResolvedValue(validMockUser);
+    (bcrypt.compareSync as jest.Mock).mockReturnValue(true);
+    (jwt.sign as jest.Mock).mockReturnValue(mockToken);
 
     // Act
-    await authService.logout(req, res, next);
-
-    // Assert
-    expect(jwt.decode).toHaveBeenCalledWith(token);
-    expect(res.json).toHaveBeenCalledWith({
-      message: 'Token blacklisted successfully',
-      data: token,
-      status: 200,
-      statusMessage: 'Success',
-    });
-    expect(next).not.toHaveBeenCalled(); // Ensure next was not called
-  });
-
-  it('should return 400 if token is not provided', async () => {
-    // Arrange
-    const logoutData = {
-      authorization: '',
-    };
-
-    const { req, res, next } = createMocks(logoutData);
-
-    // Act
-    await authService.logout(req, res, next);
-
-    // Assert
-    expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'Token is required for logout',
-        statusCode: 400,
-      }),
+    const result = await authService.login(
+      loginData.valid.userName,
+      loginData.valid.password,
     );
-    // Ensure that the response methods weren't called (because the error was handled via next)
-    expect(res.status).not.toHaveBeenCalled();
-    expect(res.json).not.toHaveBeenCalled();
-  });
-
-  it('should return 400 if token is invalid', async () => {
-    // Arrange
-    const invalidToken = 'invalid-token';
-    const decodedToken = null; // Invalid token scenario
-
-    // Mock JWT decoding to return null
-    jwt.decode = jest.fn().mockReturnValue(decodedToken);
-
-    const logoutData = {
-      authorization: `Bearer ${invalidToken}`,
-    };
-
-    const { req, res, next } = createMocks(logoutData);
-
-    // Act
-    await authService.logout(req, res, next);
 
     // Assert
-    expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'Invalid token: Missing expiration time.',
-      }),
+    expect(userRepositoryMock.findUserByEmail).toHaveBeenCalledWith(
+      loginData.valid.userName,
     );
-    // Ensure that the response methods weren't called (because the error was handled via next)
-    expect(res.status).not.toHaveBeenCalled();
-    expect(res.json).not.toHaveBeenCalled();
+    expect(bcrypt.compareSync).toHaveBeenCalledWith(
+      loginData.valid.password,
+      validMockUser.password,
+    );
+    expect(jwt.sign).toHaveBeenCalledWith(
+      { email: validMockUser.email, id: validMockUser._id },
+      expect.any(String), // Secret key
+      { expiresIn: expect.any(String) }, // Token expiration
+    );
+    expect(result).toEqual({ token: mockToken });
   });
 
-  it('should call next() if there is an unexpected error', async () => {
+  it('should throw a 400 error for invalid credentials (wrong password)', async () => {
     // Arrange
-    const token = 'mock-jwt-token';
-    const error = new Error('Unexpected error');
+    userRepositoryMock.findUserByEmail = jest
+      .fn()
+      .mockResolvedValue(invalidMockUser);
+    (bcrypt.compareSync as jest.Mock).mockReturnValue(false);
 
-    // Mock JWT decoding to throw an error
-    jwt.decode = jest.fn().mockImplementation(() => {
-      throw error;
-    });
+    // Act & Assert
+    await expect(
+      authService.login(
+        loginData.invalidPassword.userName,
+        loginData.invalidPassword.password,
+      ),
+    ).rejects.toThrow(new CustomError(msg.user.invalidCredentials, 400));
 
-    const logoutData = {
-      authorization: `Bearer ${token}`,
-    };
+    expect(userRepositoryMock.findUserByEmail).toHaveBeenCalledWith(
+      loginData.invalidPassword.userName,
+    );
+    expect(bcrypt.compareSync).toHaveBeenCalledWith(
+      loginData.invalidPassword.password,
+      invalidMockUser.password,
+    );
+  });
 
-    const { req, res, next } = createMocks(logoutData);
+  it('should throw a 400 error for a non-existing user', async () => {
+    // Arrange
+    userRepositoryMock.findUserByEmail = jest
+      .fn()
+      .mockResolvedValue(nonExistentUser);
 
-    // Act
-    await authService.logout(req, res, next);
+    // Act & Assert
+    await expect(
+      authService.login(
+        loginData.nonExistent.userName,
+        loginData.nonExistent.password,
+      ),
+    ).rejects.toThrow(new CustomError(msg.user.notFound, 400));
 
-    // Assert
-    expect(next).toHaveBeenCalledWith(error);
+    expect(userRepositoryMock.findUserByEmail).toHaveBeenCalledWith(
+      loginData.nonExistent.userName,
+    );
   });
 });

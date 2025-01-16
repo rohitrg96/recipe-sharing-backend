@@ -1,126 +1,60 @@
+// userService.test.ts
+
 import { UserService } from '../../../services/user.service';
-import { UserSchema } from '../../../models/User';
-import bcrypt from 'bcrypt';
-import { Request, Response } from 'express';
 import { CustomError } from '../../../utils/customError';
+import { UserRepository } from '../../../repositories/userRepository';
+import { mockUser } from './mock/user.mock'; // Import the mock data
 import { msg } from '../../../helper/messages';
+import { HTTP_STATUS } from '../../../utils/statusCodes';
+import { IUser } from '../../../models/User';
 
-// Mock dependencies
-jest.mock('../../../models/User');
-jest.mock('bcrypt');
+// Mock the UserRepository methods
+jest.mock('../../../repositories/userRepository');
 
-const createMocks = (userData: any) => {
-  const req = {
-    body: userData,
-  } as Request;
-
-  const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn(),
-  } as unknown as Response;
-
-  const next = jest.fn();
-
-  return { req, res, next };
-};
-
-describe('UserService addUser', () => {
+describe('UserService - addUser', () => {
   let userService: UserService;
+  let mockCreateUser: jest.Mock;
+  let mockFindUserByEmail: jest.Mock;
+  let mockFindUserById: jest.Mock;
 
-  beforeAll(() => {
+  beforeEach(() => {
+    // Initialize mocks
+    mockCreateUser = jest.fn();
+    mockFindUserByEmail = jest.fn();
+    mockFindUserById = jest.fn();
+
+    // Mock the UserRepository instance methods
+    UserRepository.prototype.createUser = mockCreateUser;
+    UserRepository.prototype.findUserByEmail = mockFindUserByEmail;
+    UserRepository.prototype.findUserById = mockFindUserById;
+
+    // Initialize UserService with mocked repository
     userService = new UserService();
   });
 
-  it('should add a user and return 200 status', async () => {
+  it('should add a user successfully if email does not exist', async () => {
     // Arrange
-    const mockUser = {
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@example.com',
-      password: 'password123',
-    };
-
-    const hashedPassword = 'hashedPassword123';
-    const createdUser = { _id: 'userId', ...mockUser };
-    const limitedFieldsUser = {
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@example.com',
-    };
-
-    // Mock database queries and bcrypt
-    UserSchema.findOne = jest.fn().mockResolvedValue(null); // No duplicate email
-    bcrypt.hash = jest.fn().mockResolvedValue(hashedPassword);
-    UserSchema.create = jest.fn().mockResolvedValue(createdUser);
-    UserSchema.findById = jest.fn().mockReturnValue({
-      select: jest.fn().mockResolvedValue(limitedFieldsUser),
-    });
-
-    const { req, res, next } = createMocks(mockUser);
+    mockFindUserByEmail.mockResolvedValue(null); // No user with that email exists
+    mockCreateUser.mockResolvedValue(mockUser); // Simulate successful user creation
+    mockFindUserById.mockResolvedValue(mockUser); // Return the user data excluding the password
 
     // Act
-    await userService.addUser(req, res, next);
+    const result = await userService.addUser(mockUser as IUser);
 
     // Assert
-    expect(UserSchema.findOne).toHaveBeenCalledWith({ email: mockUser.email });
-    expect(bcrypt.hash).toHaveBeenCalledTimes(1);
-    expect(UserSchema.create).toHaveBeenCalledWith({
-      ...mockUser,
-      password: hashedPassword,
-    });
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({
-      message: msg.user.added,
-      data: limitedFieldsUser,
-      status: 200,
-      statusMessage: 'Success',
-    });
-    expect(next).not.toHaveBeenCalled();
+    expect(mockFindUserByEmail).toHaveBeenCalledWith(mockUser.email);
+    expect(mockCreateUser).toHaveBeenCalledWith(mockUser);
+    expect(mockFindUserById).toHaveBeenCalledWith(mockUser._id);
+    expect(result).toEqual(mockUser);
   });
 
-  it('should throw a CustomError if email already exists', async () => {
+  it('should throw CustomError if email already exists', async () => {
     // Arrange
-    const mockUser = {
-      firstName: 'Jane',
-      lastName: 'Smith',
-      email: 'jane.smith@example.com',
-      password: 'password123',
-    };
+    mockFindUserByEmail.mockResolvedValue(mockUser); // Simulate email already exists
 
-    UserSchema.findOne = jest.fn().mockResolvedValue(mockUser); // Duplicate email
-
-    const { req, res, next } = createMocks(mockUser);
-
-    // Act
-    await userService.addUser(req, res, next);
-
-    // Assert
-    expect(UserSchema.findOne).toHaveBeenCalledWith({ email: mockUser.email });
-    expect(next).toHaveBeenCalledWith(new CustomError(msg.user.emailExist, 400));
-    expect(res.status).not.toHaveBeenCalled();
-    expect(res.json).not.toHaveBeenCalled();
-  });
-
-  it('should handle errors and pass them to the next middleware', async () => {
-    // Arrange
-    const mockUser = {
-      firstName: 'Invalid',
-      lastName: 'User',
-      email: 'invalid.user@example.com',
-      password: 'password123',
-    };
-
-    const mockError = new Error('Database error');
-    UserSchema.findOne = jest.fn().mockRejectedValue(mockError);
-
-    const { req, res, next } = createMocks(mockUser);
-
-    // Act
-    await userService.addUser(req, res, next);
-
-    // Assert
-    expect(next).toHaveBeenCalledWith(mockError);
-    expect(res.status).not.toHaveBeenCalled();
-    expect(res.json).not.toHaveBeenCalled();
+    // Act & Assert
+    await expect(userService.addUser(mockUser as IUser)).rejects.toThrowError(
+      new CustomError(msg.user.emailExist, HTTP_STATUS.BAD_REQUEST),
+    );
   });
 });
