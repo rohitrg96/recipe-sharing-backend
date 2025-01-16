@@ -62,6 +62,9 @@ jobs:
           npm install
 
       # Deploy to Vercel (for main branch)
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
       - name: Deploy to Vercel
         run: |
           vercel --prod --yes --token ${{ secrets.VERCEL_TOKEN }}  # Add Vercel token as GitHub secret
