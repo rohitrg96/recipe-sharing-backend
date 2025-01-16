@@ -1,129 +1,118 @@
+import mongoose from 'mongoose';
 import { AuthService } from '../../../services/auth.service';
-import { UserSchema } from '../../../models/User';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { Request, Response } from 'express';
+import { CustomError } from '../../../utils/customError';
+import { msg } from '../../../helper/messages';
+import { UserRepository } from '../../../repositories/userRepository';
 
-// Mock dependencies
-jest.mock('../../../models/User');
+jest.mock('../../../repositories/userRepository');
 jest.mock('bcrypt');
 jest.mock('jsonwebtoken');
 
-const createMocks = (loginData: { userName: string; password: string }) => {
-  const req = {
-    body: loginData,
-  } as Request; // Cast to Request type
-
-  const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn(),
-  } as unknown as Response;
-
-  const next = jest.fn();
-
-  return { req, res, next };
-};
-
 describe('AuthService login', () => {
   let authService: AuthService;
+  let userRepositoryMock: jest.Mocked<UserRepository>;
 
   beforeAll(() => {
     authService = new AuthService();
+    userRepositoryMock = authService[
+      'userRepository'
+    ] as jest.Mocked<UserRepository>;
   });
 
-  it('should return 200 and a token for valid credentials', async () => {
+  it('should return a token for valid credentials', async () => {
     // Arrange
     const mockUser = {
+      _id: new mongoose.Types.ObjectId(),
       email: 'test@example.com',
       password: bcrypt.hashSync('password123', 10), // hashed password
+      firstName: 'John',
+      lastName: 'Doe',
+      newPassword: '',
     };
+
     const token = 'mock-jwt-token';
 
-    // Mock database query and bcrypt.compareSync
-    UserSchema.findOne = jest.fn().mockResolvedValue(mockUser);
-    bcrypt.compareSync = jest.fn().mockReturnValue(true);
-    jwt.sign = jest.fn().mockReturnValue(token);
+    // Mock user repository and bcrypt
+    userRepositoryMock.findUserByEmail = jest.fn().mockResolvedValue(mockUser); // Correctly mock the method
+    (bcrypt.compareSync as jest.Mock).mockReturnValue(true);
+    (jwt.sign as jest.Mock).mockReturnValue(token);
 
     const loginData = {
-      userName: 'rohit12@gmil.com',
-      password: '123456',
+      userName: 'test@example.com',
+      password: 'password123',
     };
-
-    const { req, res, next } = createMocks(loginData);
 
     // Act
-    await authService.login(req, res, next);
+    const result = await authService.login(
+      loginData.userName,
+      loginData.password,
+    );
 
     // Assert
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({
-      message: 'Logged in successfully',
-      data: { token },
-      status: 200,
-      statusMessage: 'Success',
-    });
-    expect(next).not.toHaveBeenCalled(); // Ensure next was not called
+    expect(userRepositoryMock.findUserByEmail).toHaveBeenCalledWith(
+      loginData.userName,
+    );
+    expect(bcrypt.compareSync).toHaveBeenCalledWith(
+      loginData.password,
+      mockUser.password,
+    );
+    expect(jwt.sign).toHaveBeenCalledWith(
+      { email: mockUser.email, id: mockUser._id },
+      expect.any(String), // Secret key
+      { expiresIn: expect.any(String) }, // Token expiration
+    );
+    expect(result).toEqual({ token });
   });
 
-  it('should return 400 for invalid credentials (wrong password)', async () => {
+  it('should throw a 400 error for invalid credentials (wrong password)', async () => {
     // Arrange
     const mockUser = {
+      _id: new mongoose.Types.ObjectId(),
       email: 'test@example.com',
       password: bcrypt.hashSync('password123', 10), // hashed password
-      _id: '12345',
     };
 
-    // Mock database query and bcrypt.compareSync
-    UserSchema.findOne = jest.fn().mockResolvedValue(mockUser);
-    bcrypt.compareSync = jest.fn().mockReturnValue(false);
+    // Mock user repository and bcrypt
+    userRepositoryMock.findUserByEmail = jest.fn().mockResolvedValue(mockUser); // Correctly mock the method
+    (bcrypt.compareSync as jest.Mock).mockReturnValue(false);
 
     const loginData = {
       userName: 'test@example.com',
       password: 'wrongpassword',
     };
 
-    const { req, res, next } = createMocks(loginData);
+    // Act & Assert
+    await expect(
+      authService.login(loginData.userName, loginData.password),
+    ).rejects.toThrow(new CustomError(msg.user.invalidCredentials, 400));
 
-    // Act
-    await authService.login(req, res, next);
-
-    // Assert
-    expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'Invalid credentials',
-        statusCode: 400,
-      }),
+    expect(userRepositoryMock.findUserByEmail).toHaveBeenCalledWith(
+      loginData.userName,
     );
-
-    // Ensure that the response methods weren't called (because the error was handled via next)
-    expect(res.status).not.toHaveBeenCalled();
-    expect(res.json).not.toHaveBeenCalled();
+    expect(bcrypt.compareSync).toHaveBeenCalledWith(
+      loginData.password,
+      mockUser.password,
+    );
   });
 
-  it('should return 400 for non-existing user', async () => {
+  it('should throw a 400 error for a non-existing user', async () => {
     // Arrange
-    UserSchema.findOne = jest.fn().mockResolvedValue(null); // Mock no user found in the database
+    userRepositoryMock.findUserByEmail = jest.fn().mockResolvedValue(null); // Correctly mock the method
 
     const loginData = {
       userName: 'nonexistent@example.com',
       password: 'password123',
     };
 
-    const { req, res, next } = createMocks(loginData);
+    // Act & Assert
+    await expect(
+      authService.login(loginData.userName, loginData.password),
+    ).rejects.toThrow(new CustomError(msg.user.notFound, 400));
 
-    // Act
-    await authService.login(req, res, next);
-
-    // Assert
-    expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'User not found',
-        statusCode: 400,
-      }),
+    expect(userRepositoryMock.findUserByEmail).toHaveBeenCalledWith(
+      loginData.userName,
     );
-
-    // Ensure that the response methods weren't called (because the error was handled via next)
-    expect(res.status).not.toHaveBeenCalled();
-    expect(res.json).not.toHaveBeenCalled();
   });
 });

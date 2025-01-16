@@ -1,64 +1,84 @@
-import { Request, Response, NextFunction } from 'express';
-import { UserSchema } from '../models/User';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { responseStatus } from '../helper/response';
 import bcrypt from 'bcrypt';
 import { jwtConfig } from '../config/jwtconfig';
 import { msg } from '../helper/messages';
 import { blacklistToken } from '../middleware/authorization/authFunction';
 import { CustomError } from '../utils/customError';
+import { HTTP_STATUS } from '../utils/statusCodes';
+import { UserRepository } from '../repositories/userRepository'; // Import the UserRepository
 
+/**
+ * AuthService class handles the business logic related to authentication
+ * operations like login and logout.
+ */
 export class AuthService {
-  login = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      let username = req.body.userName;
-      let password = req.body.password;
-      let dbUser = await UserSchema.findOne({ email: username });
-      if (dbUser) {
-        let isValidPass = bcrypt.compareSync(password, dbUser.password);
-        if (isValidPass) {
-          const token = jwt.sign(
-            {
-              email: dbUser.email,
-              id: dbUser._id,
-            },
-            jwtConfig.secret,
-            { expiresIn: jwtConfig.expiresIn },
-          );
-          return responseStatus(res, 200, msg.user.loginSuccess, { token });
-        } else {
-          throw new CustomError(msg.user.invalidCredentials, 400);
-        }
+  private userRepository: UserRepository;
+
+  constructor() {
+    this.userRepository = new UserRepository(); // Initialize the UserRepository
+  }
+
+  /**
+   * Handle user login by validating credentials and generating a JWT token.
+   *
+   * @param  userName - The user's email or username.
+   * @param password - The user's password.
+   * @returns - A promise that resolves to an object containing the generated JWT token.
+   * @throws - If the user is not found or the password is incorrect.
+   */
+  login = async (userName: string, password: string) => {
+    // Check if the user exists in the database
+    const dbUser = await this.userRepository.findUserByEmail(userName);
+
+    if (dbUser) {
+      // Validate the password by comparing it with the stored hashed password
+      const isValidPass = bcrypt.compareSync(password, dbUser.password);
+      if (isValidPass) {
+        // If password is correct, generate JWT token for the user
+        const token = jwt.sign(
+          {
+            email: dbUser.email,
+            id: dbUser._id,
+          },
+          jwtConfig.secret, // Secret key for signing the token
+          { expiresIn: jwtConfig.expiresIn }, // Token expiration time
+        );
+
+        // Send back a successful response with the generated token
+        return { token };
       } else {
-        // console.log('User Not Found');
-        throw new CustomError(msg.user.notFound, 400);
+        // If password is incorrect, throw a CustomError with BAD_REQUEST status
+        throw new CustomError(
+          msg.user.invalidCredentials,
+          HTTP_STATUS.BAD_REQUEST,
+        );
       }
-    } catch (error: any) {
-      console.error(error);
-      next(error);
+    } else {
+      // If user is not found, throw a CustomError with BAD_REQUEST status
+      throw new CustomError(msg.user.notFound, HTTP_STATUS.BAD_REQUEST);
     }
   };
 
-  logout = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const token = req.headers.authorization?.split(' ')[1];
-
-      if (!token) {
-        throw new CustomError(msg.user.tokenNotFound, 400);
-      }
-      const decoded = jwt.decode(token) as JwtPayload;
-      // console.log(decoded);
-      if (!decoded || !decoded.exp) {
-        throw new Error('Invalid token: Missing expiration time.');
-      }
-      const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
-      const ttl = decoded.exp - currentTime; // Remaining time
-
-      blacklistToken(token, ttl);
-      return responseStatus(res, 200, msg.user.tokenBlacklisted, token);
-    } catch (error) {
-      console.error(error);
-      next(error);
+  /**
+   * Handle user logout by blacklisting the JWT token.
+   *
+   * @param token - The JWT token to be blacklisted.
+   * @returns - A promise that resolves to an object containing the blacklisted token.
+   * @throws - If the token is not found or the token is invalid.
+   */
+  logout = async (token: string) => {
+    if (!token) {
+      throw new CustomError(msg.user.tokenNotFound, 400);
     }
+    const decoded = jwt.decode(token) as JwtPayload;
+    // Check if the token has an expiration field
+    if (!decoded || !decoded.exp) {
+      throw new Error('Invalid token: Missing expiration time.');
+    }
+    const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+    const ttl = decoded.exp - currentTime; // Remaining time
+
+    blacklistToken(token, ttl);
+    return { token };
   };
 }

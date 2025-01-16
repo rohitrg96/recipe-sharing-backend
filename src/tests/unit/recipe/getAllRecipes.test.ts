@@ -1,67 +1,86 @@
 import { RecipeService } from '../../../services/recipe.service';
-import { RecipeSchema } from '../../../models/Recipe';
-import { Request, Response } from 'express';
-import { msg } from '../../../helper/messages';
-import { CustomError } from '../../../utils/customError';
+import { RecipeRepository } from '../../../repositories/recipeRepository';
+import {
+  mockRecipes,
+  mockTotalCount,
+  mockPipeline,
+  filtersWithResults,
+  filtersWithNoResults,
+} from '../recipe/mock/recipe.mock';
 
-jest.mock('../../../models/Recipe', () => ({
-  RecipeSchema: {
-    aggregate: jest.fn().mockReturnValue({
-      exec: jest.fn().mockResolvedValue([]), // Mock exec method
-    }),
-    countDocuments: jest.fn(),
-  },
+jest.mock('../../../repositories/recipeRepository', () => ({
+  RecipeRepository: jest.fn().mockImplementation(() => ({
+    getRecipesAggregationPipeline: jest.fn(),
+    getTotalCountPipeline: jest.fn(),
+    aggregateRecipes: jest.fn(),
+  })),
 }));
-
-const createMocks = (query: any) => {
-  const req = {
-    query,
-  } as unknown as Request;
-
-  const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn(),
-  } as unknown as Response;
-
-  const next = jest.fn();
-
-  return { req, res, next };
-};
 
 describe('RecipeService getAllRecipes', () => {
   let recipeService: RecipeService;
+  let recipeRepositoryMock: jest.Mocked<RecipeRepository>;
 
   beforeAll(() => {
     recipeService = new RecipeService();
+    recipeRepositoryMock = recipeService[
+      'recipeRepository'
+    ] as jest.Mocked<RecipeRepository>;
   });
 
-  it('should fetch all recipes with pagination', async () => {
-    const mockRecipes = [
-      { title: 'Delicious Pasta', ingredients: ['Pasta', 'Tomato Sauce'], preparationTime: 30 },
-      { title: 'Tasty Pizza', ingredients: ['Cheese', 'Tomato'], preparationTime: 20 },
-    ];
+  it('should fetch all recipes with pagination and filters', async () => {
+    recipeRepositoryMock.getRecipesAggregationPipeline.mockReturnValue(
+      mockPipeline,
+    );
+    recipeRepositoryMock.getTotalCountPipeline.mockReturnValue(mockPipeline);
+    recipeRepositoryMock.aggregateRecipes
+      .mockResolvedValueOnce(mockRecipes)
+      .mockResolvedValueOnce(mockTotalCount);
 
-    // Mock database behavior
-    (RecipeSchema.aggregate as jest.Mock).mockReturnValueOnce({
-      exec: jest.fn().mockResolvedValue(mockRecipes),
+    const result = await recipeService.getAllRecipes(filtersWithResults);
+
+    expect(
+      recipeRepositoryMock.getRecipesAggregationPipeline,
+    ).toHaveBeenCalledWith(filtersWithResults);
+    expect(recipeRepositoryMock.getTotalCountPipeline).toHaveBeenCalledWith(
+      filtersWithResults,
+    );
+    expect(recipeRepositoryMock.aggregateRecipes).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({
+      data: mockRecipes,
+      pagination: {
+        total: 10,
+        page: 1,
+        limit: 2,
+        totalPages: 5,
+      },
     });
-    (RecipeSchema.countDocuments as jest.Mock).mockResolvedValue(2);
+  });
 
-    const query = { page: '1', limit: '10' };
-    const { req, res, next } = createMocks(query);
+  it('should return an empty response if no recipes are found', async () => {
+    recipeRepositoryMock.aggregateRecipes
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
 
-    // Act
-    await recipeService.getAllRecipes(req, res, next);
+    const result = await recipeService.getAllRecipes(filtersWithNoResults);
 
-    // Assert
-    expect(RecipeSchema.aggregate).toHaveBeenCalled();
-    expect(RecipeSchema.countDocuments).toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith({
-      message: msg.recipe.fetched,
-      data: { data: mockRecipes, pagination: { total: 2, page: 1, limit: 10, totalPages: 1 } },
-      status: 200,
-      statusMessage: 'Success',
+    expect(result).toEqual({
+      data: [],
+      pagination: {
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+      },
     });
-    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('should throw an error if the repository methods fail', async () => {
+    recipeRepositoryMock.aggregateRecipes.mockRejectedValue(
+      new Error('Database error'),
+    );
+
+    await expect(
+      recipeService.getAllRecipes(filtersWithNoResults),
+    ).rejects.toThrowError('Database error');
   });
 });

@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 
 export const validationMiddleware = (schema: ObjectSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    let dataToValidate: any;
+    let dataToValidate: unknown;
 
     // Handle different HTTP methods and gather data to validate
     switch (req.method) {
