@@ -6,7 +6,11 @@ import { msg } from '../helper/messages';
 
 const authService = new AuthService();
 
-export const login = async (req: Request, res: Response, next: NextFunction) => {
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     // Destructure the userName and password from the request body
     const { userName, password } = req.body;
@@ -31,7 +35,12 @@ export const logout = (req: Request, res: Response, next: NextFunction) => {
     const result = authService.logout(token!);
 
     // Return a success response after blacklisting the token
-    return responseStatus(res, HTTP_STATUS.OK, msg.user.tokenBlacklisted, result);
+    return responseStatus(
+      res,
+      HTTP_STATUS.OK,
+      msg.user.tokenBlacklisted,
+      result,
+    );
   } catch (error: unknown) {
     // If any error occurs, pass it to the error handler middleware
     next(error);

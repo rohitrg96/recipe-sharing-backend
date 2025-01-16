@@ -12,6 +12,7 @@ export default [
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn', // Set 'no-explicit-any' to 'warn',
       'no-useless-catch': 'off', // Disables the rule
+      'no-unused-vars': 'off',
     },
   },
 ];

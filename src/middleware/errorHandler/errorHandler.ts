@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { responseStatus } from '../../helper/response';
 import { CustomError } from '../../utils/customError';
 import logger from '../../config/logger';
@@ -7,6 +7,7 @@ export const errorHandler = (
   err: Error | CustomError,
   req: Request,
   res: Response,
+  next: NextFunction,
 ) => {
   // Check if it's a CustomError, otherwise assign default values
 
